@@ -563,6 +563,23 @@ extends Console\Client {
 
 		$More = join('/', $Argv);
 
+		////////
+
+		// do not mess with unix absolute paths.
+
+		if(str_starts_with($More, '/'))
+		return $More;
+
+		// do not mess with windows absolute paths.
+
+		if(str_starts_with($More, '\\'))
+		return $this->Repath($More);
+
+		if(preg_match('#^[A-Z]:\\\\#', $More))
+		return $this->Repath($More);
+
+		////////
+
 		$Path = $this->Repath(rtrim("{$Path}/{$More}"));
 
 		return $Path;
@@ -676,6 +693,8 @@ extends Console\Client {
 	array {
 
 		if($File) {
+			$File = $this->GetLocalPath($File);
+
 			if(!file_exists($File))
 			$this->Quit(1, $File);
 
