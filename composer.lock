@@ -1,0 +1,132 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "6c8a94c489b77df7d12d75fe3a37c3f7",
+    "packages": [
+        {
+            "name": "netherphp/console",
+            "version": "dev-redux",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/netherphp/console.git",
+                "reference": "6c455f4ffa8b7f4e66939c392a98f91cd307659b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/netherphp/console/zipball/6c455f4ffa8b7f4e66939c392a98f91cd307659b",
+                "reference": "6c455f4ffa8b7f4e66939c392a98f91cd307659b",
+                "shasum": ""
+            },
+            "require": {
+                "netherphp/object": "dev-redux",
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
+                "netherphp/standards": ">=0.2.7",
+                "phpunit/phpunit": "^9.5"
+            },
+            "default-branch": true,
+            "bin": [
+                "bin/nethercon"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Nether\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Bob Majdak Jr",
+                    "email": "bmajdak@php.net",
+                    "homepage": "https://pegasusgate.net/+bob",
+                    "role": "developer"
+                }
+            ],
+            "description": "A CLI Parser",
+            "keywords": [
+                "cli",
+                "console",
+                "php",
+                "terminal"
+            ],
+            "support": {
+                "issues": "https://github.com/netherphp/console/issues",
+                "source": "https://github.com/netherphp/console/tree/redux"
+            },
+            "time": "2023-01-14T18:43:14+00:00"
+        },
+        {
+            "name": "netherphp/object",
+            "version": "dev-redux",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/netherphp/object.git",
+                "reference": "4d0010e92ccb43b046df1ec19d25aa6086ad38a6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/netherphp/object/zipball/4d0010e92ccb43b046df1ec19d25aa6086ad38a6",
+                "reference": "4d0010e92ccb43b046df1ec19d25aa6086ad38a6",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
+                "netherphp/standards": ">=0.1.0",
+                "phpunit/phpunit": "^9.5"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Nether\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-2-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Bob Majdak Jr",
+                    "email": "bmajdak@php.net",
+                    "homepage": "http://pegasusgate.net/+bob",
+                    "role": "developer"
+                }
+            ],
+            "description": "Self-Sealing Stem Object",
+            "keywords": [
+                "datastore",
+                "object",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/netherphp/object/issues",
+                "source": "https://github.com/netherphp/object/tree/redux"
+            },
+            "time": "2023-01-10T19:59:22+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "netherphp/console": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
+}

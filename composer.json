@@ -1,0 +1,11 @@
+{
+	"minimum-stability": "dev",
+	"require": {
+		"netherphp/console": "dev-redux"
+	},
+	"autoload": {
+		"psr-0": {
+			"Local\\": "core/"
+		}
+	}
+}
