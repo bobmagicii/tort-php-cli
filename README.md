@@ -188,6 +188,8 @@ the same seed.
 php tort.phar gen "this is a test." --seed=69
 ```
 
+---
+
 Generate a new config file for your voice so you can forget all the tuning
 values that are listed by the `tort help gen` command later on. It will create
 a `voice.json` file in that voice folder with the tuning values that have the
