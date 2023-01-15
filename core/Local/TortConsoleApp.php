@@ -575,7 +575,7 @@ extends Console\Client {
 		if(str_starts_with($More, '\\'))
 		return $this->Repath($More);
 
-		if(preg_match('#^[A-Z]:\\\\#', $More))
+		if(preg_match('#^[A-Za-z]:\\\\#', $More))
 		return $this->Repath($More);
 
 		////////
