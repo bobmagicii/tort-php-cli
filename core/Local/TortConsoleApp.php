@@ -17,7 +17,7 @@ extends Console\Client {
 	const
 	AppName    = 'Tort',
 	AppDesc    = 'PHP-CLI Wrapper for TorToiSe TTS',
-	AppVersion = '1.0.0-dev';
+	AppVersion = '1.0.0';
 
 	const
 	DefaultVoice     = 'train_atkins',
@@ -523,6 +523,16 @@ extends Console\Client {
 		copy(
 			$this->Repath("{$BaseDir}/tort.json"),
 			$this->Repath("{$BaseDir}/build/tort/tort.json")
+		);
+
+		copy(
+			$this->Repath("{$BaseDir}/README.md"),
+			$this->Repath("{$BaseDir}/build/tort/README.md")
+		);
+
+		copy(
+			$this->Repath("{$BaseDir}/LICENSE.md"),
+			$this->Repath("{$BaseDir}/build/tort/LICENSE.md")
 		);
 
 		return 0;
