@@ -17,7 +17,7 @@ extends Console\Client {
 	const
 	AppName    = 'Tort',
 	AppDesc    = 'PHP-CLI Wrapper for TorToiSe TTS',
-	AppVersion = '1.0.0';
+	AppVersion = '1.0.1';
 
 	const
 	DefaultVoice     = 'train_atkins',
@@ -331,16 +331,24 @@ extends Console\Client {
 				->PrintLn();
 			}
 
-			if($Config->Exec->DryRun || $Verbose)
-			foreach($Commands as $CmdIter => $Cmd)
-			$this->FormatLn(
-				'%s%s',
-				$this->Formatter->Yellow(sprintf(
-					'Line %\'.03d: ',
-					($CmdIter + 1)
-				)),
-				$Cmd
-			);
+			if($Config->Exec->DryRun || $Verbose) {
+				$CurIter = 0;
+
+				foreach($Commands as $CmdIter => $Cmd) {
+					$CurIter++;
+
+					$this->PrintLn($this->GetStatusPrefixedLine(
+						'DimYellow',
+						$CurIter,
+						$Commands->Count(),
+						($CmdIter + 1),
+						$Config->Exec->Label,
+						$Cmd
+					));
+
+					$this->PrintLn();
+				}
+			}
 
 			if(!$Config->Exec->DryRun)
 			if(!$Config->Exec->Derp) {
@@ -385,28 +393,41 @@ extends Console\Client {
 		// now we can finally commit tortoise to doing some work having
 		// hopefully increased the chances of success.
 
+		$CurIter = 0;
 		foreach($Commands as $CmdIter => $Cmd) {
-			$this->FormatLn(
-				'%s%s',
-				$this->Formatter->BrightCyan(sprintf(
-					'Line %\'.03d: ',
-					($CmdIter + 1)
-				)),
+			$CurIter++;
+
+			$this->PrintLn($this->GetStatusPrefixedLine(
+				'BrightCyan',
+				$CurIter,
+				$Commands->Count(),
+				($CmdIter+1),
+				$Config->Exec->Label,
 				$Cmd
+			));
+
+			$this->PrintLn();
+			$this->ExecuteTortoise(
+				$CmdIter,
+				$Cmd,
+				$this->GetStatusPrefixedLine(
+					NULL,
+					$CurIter,
+					$Commands->Count(),
+					($CmdIter + 1),
+					$Config->Exec->Label
+				)
 			);
-
-			$this->PrintLn();
-			$this->ExecuteTortoise($CmdIter, $Cmd);
-
-			$this->PrintLn();
-			$this->PrintLn($this->FormatPrimary('Generation Done'));
-			$this->PrintLn();
 
 			if(!$Config->Exec->KeepCombined)
 			$this->DeleteCombinedFile($OutputDir);
 
 			if(!$Config->Exec->DontRename)
 			$this->RenameFilesFromRun($OutputDir, $CmdIter, $Config);
+
+			$this->PrintLn();
+			$this->PrintLn($this->FormatPrimary('Generation Done'));
+			$this->PrintLn();
 		}
 
 		////////
@@ -858,7 +879,7 @@ extends Console\Client {
 	}
 
 	protected function
-	ExecuteTortoise(int $CmdIter, string $Cmd):
+	ExecuteTortoise(int $CmdIter, string $Cmd, string $Prefix):
 	void {
 
 		// this is a bunch of bullshit depending on the redirection of
@@ -871,8 +892,8 @@ extends Console\Client {
 		$PBarReg = '#(\d+)+/(\d+) \[([\d\:]+)<([\d\:]+), ([^\]]+)\]#';
 		$PBarData = NULL;
 
-		$PrefixData = $this->Formatter->BrightCyan(sprintf('Line %\'.03d >>', ($CmdIter+1)));
-		$PrefixTime = $this->FormatPrimary(sprintf('Line %\'.03d <>', ($CmdIter+1)));
+		$PrefixData = $this->Formatter->DimCyan($Prefix);
+		$PrefixTime = $this->Formatter->BrightCyan($Prefix);
 
 		$PP = popen($Cmd, 'r');
 
@@ -882,7 +903,7 @@ extends Console\Client {
 			// handle if we got something that smells like progress.
 			if(preg_match($PBarReg, $Data, $PBarData)) {
 				printf(
-					"\r%s Iter %s of %s @ %s [%s, ETA %s]",
+					"\r%sIter %s of %s @ %s [%s, ETA %s]",
 					$PrefixTime,
 					$PBarData[1],
 					$PBarData[2],
@@ -910,7 +931,7 @@ extends Console\Client {
 
 				// treat anything else as printable.
 				printf(
-					'%s %s%s',
+					'%s%s%s',
 					$PrefixData,
 					$Next,
 					PHP_EOL
@@ -994,6 +1015,27 @@ extends Console\Client {
 		}
 
 		return $Index;
+	}
+
+	protected function
+	GetStatusPrefixedLine(?string $Colour, int $Current, int $Total, int $LineNum, ?string $Label=NULL, ?string $Info=NULL):
+	string {
+
+		$Output = sprintf(
+			'%s[%d/%d] [Line %d] ',
+			($Label ? "[{$Label}] ": ''),
+			$Current,
+			$Total,
+			$LineNum,
+		);
+
+		if($Colour)
+		$Output = $this->Formatter->{$Colour}($Output);
+
+		if($Info)
+		$Output .= $Info;
+
+		return $Output;
 	}
 
 }
