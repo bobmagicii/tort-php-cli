@@ -1,4 +1,4 @@
-# yo
+# general things that just don't need to go into source control.
 
 /build
 /input
@@ -6,3 +6,8 @@
 /tortoise-tts
 /vendor
 /voices
+
+# local things that just help me specifically thta don't need to be in
+# source control either.
+
+update.bat
