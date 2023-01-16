@@ -90,7 +90,7 @@ extends Prototype {
 	void {
 
 		if(!is_dir(dirname($File)))
-		throw new Exception("Unable to write {$File}");
+		throw new Exception("Unable to write {$File} (permission denied)");
 
 		// some properties don't make sense to write to disk.
 

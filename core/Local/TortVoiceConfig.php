@@ -105,7 +105,7 @@ extends Prototype {
 	void {
 
 		if(!is_writable(dirname($File)))
-		throw new Exception("unable to write {$File}");
+		throw new Exception("unable to write {$File} (permission denied)");
 
 		// get stickbugged.
 
