@@ -17,7 +17,7 @@ extends Console\Client {
 	const
 	AppName    = 'Tort',
 	AppDesc    = 'PHP-CLI Wrapper for TorToiSe TTS',
-	AppVersion = '1.0.1';
+	AppVersion = '1.0.2-dev';
 
 	const
 	DefaultVoice     = 'train_atkins',
@@ -135,6 +135,12 @@ extends Console\Client {
 			if(!isset($_SERVER['CONDA_DEFAULT_ENV']))
 			$this->Quit(4);
 		}
+
+		// handle me constantly forgetting the batch flag when running
+		// them from batch scripts.
+
+		if(stream_isatty(STDIN))
+		$Config->Exec->Derp = TRUE;
 
 		////////
 
