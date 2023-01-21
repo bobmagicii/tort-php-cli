@@ -175,11 +175,7 @@ extends Console\Client {
 		// process and mutate the text and file inputs for singular,
 		// file, or per line running.
 
-		list($Text, $File, $Lines) = $this->ProcessInputs(
-			$Config->Exec->Text,
-			$Config->Exec->File,
-			$Config->Exec->Lines
-		);
+		list($Text, $File, $Lines) = $this->ProcessInputs($Config);
 
 		if($File && !$Lines) {
 			$RunMode = static::RunModeFile;
@@ -744,11 +740,18 @@ extends Console\Client {
 	}
 
 	protected function
-	ProcessInputs(?string $Text, ?string $File, bool|string $Lines):
+	ProcessInputs(TortConfigPackage $Config):
 	array {
 
+		$File = $Config->Exec->File;
+		$Lines = $Config->Exec->Lines;
+		$Text = $Config->Exec->Text;
+
 		if($File) {
-			$File = $this->GetLocalPath($File);
+			$File = $this->ReplacePathTokens(
+				$this->GetLocalPath($File),
+				$Config
+			);
 
 			if(!file_exists($File))
 			$this->Quit(1, $File);
