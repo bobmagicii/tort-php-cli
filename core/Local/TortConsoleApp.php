@@ -512,6 +512,39 @@ extends Console\Client {
 		return 0;
 	}
 
+	#[Console\Meta\Command('seqdir')]
+	#[Console\Meta\Info('Resequence a directory of lines into folders one of each line in the folder.')]
+	#[Console\Meta\Arg('directory-of-lines')]
+	#[Console\Meta\Toggle('--copy', 'Copy files instead or move them.')]
+	#[Console\Meta\Error(1, 'no --dir specified')]
+	public function
+	SequenceDir():
+	int {
+
+		$Path = $this->GetInput(1) ?? $this->GetOption('path');
+		$Copy = $this->GetOption('copy') ?? FALSE;
+
+		if(!$Path)
+		$this->Quit(1);
+
+		////////
+
+		$Path = $this->GetLocalPath($Path);
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Sequencing Directory:'),
+			$Path
+		);
+
+		////////
+
+		$Tool = new TortDirectorySequencer($Path, $Copy);
+		$Tool->Run();
+
+		return 0;
+	}
+
 	#[Console\Meta\Command('phar', TRUE)]
 	#[Console\Meta\Info('Compile a tort.phar for easy use/distribution.')]
 	public function
