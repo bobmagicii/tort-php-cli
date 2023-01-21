@@ -50,6 +50,7 @@ extends Console\Client {
 	#[Console\Meta\Value('--temper', '[voice.conf] Feels like it controls how wild of pitch inflections can be walked through the range. (0.0-1.0)')]
 	#[Console\Meta\Value('--cond-str', '[voice.conf] Strength of the vocal conditioning by the model. (0.0-inf)')]
 	#[Console\Meta\Value('--rep-pen', '[voice.conf] Higher means it tries harder to squash repeating sound and silences. (0.0-inf)')]
+	#[Console\Meta\Value('--len-pen', '[voice.conf] Higher means it should try harder to be brief. (0.0-inf)')]
 	#[Console\Meta\Value('--diff-temp', '[voice.conf] Claimed it controls how mushy something might sound. (0.0-1.0)')]
 	#[Console\Meta\Toggle('--dry', 'Just pretend to do it.')]
 	#[Console\Meta\Toggle('--keep-combined', 'Do not delete seemingly pointless _combined.wav file.')]
@@ -104,6 +105,7 @@ extends Console\Client {
 		$Config->Voice->TopP = $this->GetOption('top-p') ?? $Config->Voice->TopP;
 		$Config->Voice->CondStr = $this->GetOption('cond-str') ?? $Config->Voice->CondStr;
 		$Config->Voice->RepPen = $this->GetOption('rep-pen') ?? $Config->Voice->RepPen;
+		$Config->Voice->LenPen = $this->GetOption('len-pen') ?? $Config->Voice->LenPen;
 		$Config->Voice->Temper = $this->GetOption('temper') ?? $Config->Voice->Temper;
 		$Config->Voice->DiffTemper = $this->GetOption('diff-temper') ?? $Config->Voice->DiffTemper;
 
@@ -139,7 +141,7 @@ extends Console\Client {
 		// handle me constantly forgetting the batch flag when running
 		// them from batch scripts.
 
-		if(stream_isatty(STDIN))
+		if(!$this->IsUserInteractable())
 		$Config->Exec->Derp = TRUE;
 
 		////////
@@ -252,6 +254,7 @@ extends Console\Client {
 		->FormatLn('%s %.2f', $this->FormatPrimary(' - Temper:'), $Config->Voice->Temper)
 		->FormatLn('%s %.2f', $this->FormatPrimary(' - DiffTemper:'), $Config->Voice->DiffTemper)
 		->FormatLn('%s %.2f', $this->FormatPrimary(' - CondStr:'), $Config->Voice->CondStr)
+		->FormatLn('%s %.2f', $this->FormatPrimary(' - LenPen:'), $Config->Voice->LenPen)
 		->FormatLn('%s %.2f', $this->FormatPrimary(' - RepPen:'), $Config->Voice->RepPen)
 		->PrintLn();
 
@@ -279,7 +282,8 @@ extends Console\Client {
 					'--top-p %.2f '.
 					'--temperature %.2f '.
 					'--diffusion-temperature %.2f '.
-					'--repetition-penalty %.2f '
+					'--repetition-penalty %.2f '.
+					'--length-penalty %.2f '
 				),
 				$TortoiseTTS,
 				$VoiceDir, $Voice->Join(','),
@@ -293,6 +297,7 @@ extends Console\Client {
 				$Config->Voice->Temper,
 				$Config->Voice->DiffTemper,
 				$Config->Voice->RepPen,
+				$Config->Voice->LenPen
 			);
 
 			if($Config->Exec->Seed)
@@ -676,6 +681,26 @@ extends Console\Client {
 		return $Output;
 	}
 
+	protected function
+	IsUserInteractable():
+	bool {
+
+		// if run from a script i want to disable interactions. this is how
+		// bash like shells seem to do it.
+
+		if(isset($_SERVER['SHLVL']) && $_SERVER['SHLVL'])
+		return FALSE;
+
+		// if run from a cron i want to disable interactions.
+
+		if(!stream_isatty(STDIN))
+		return FALSE;
+
+		////////
+
+		return TRUE;
+	}
+
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
@@ -698,6 +723,9 @@ extends Console\Client {
 
 			if(!$this->HasOption('rep-pen'))
 			$Config->Voice->RepPen = $VoiceConf->RepPen;
+
+			if(!$this->HasOption('len-pen'))
+			$Config->Voice->LenPen = $VoiceConf->LenPen;
 
 			if(!$this->HasOption('iters'))
 			$Config->Voice->Iters = $VoiceConf->Iters;

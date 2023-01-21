@@ -74,6 +74,18 @@ extends Prototype {
 	public float
 	$RepPen = 2.0;
 
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
+	// controls how long things can be dragged out. documentation says
+	// higher values will cause more brevity.
+
+	public float
+	$LenPen = 1.0;
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
 	// how many iterations for the model to cook before rendering.
 
 	public int
@@ -86,16 +98,19 @@ extends Prototype {
 	TryToPreventDeath():
 	void {
 
-		// docs claim range is 0 to 1, but it straight up crashes with
-		// a python stack dump at zero.
+		// values it demands be above zero.
 
 		if($this->TopP < 0.01)
 		$this->TopP = 0.01;
 
-		// temperature itself it just demands above zero regardless.
-
 		if($this->Temper < 0.01)
 		$this->Temper = 0.01;
+
+		if($this->RepPen < 0.01)
+		$this->RepPen = 0.01;
+
+		if($this->LenPen < 0.01)
+		$this->LenPen = 0.01;
 
 		return;
 	}
