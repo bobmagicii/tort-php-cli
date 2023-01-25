@@ -44,6 +44,7 @@ extends Console\Client {
 	#[Console\Meta\Value('--voice', 'Which voice to use. The name of the directory within the voices folder.')]
 	#[Console\Meta\Value('--count', 'How many sound files to render to experience different variations.')]
 	#[Console\Meta\Value('--label', 'Just a text label to give this run to help remember. Gets added to the generated filenames and can be used in the outdir as well.')]
+	#[Console\Meta\Value('--ppre', 'A prompt to prefix each prompt with using TorToiSe built-in prompt engineering.')]
 	#[Console\Meta\Value('--iters', '[voice.conf] How many iterations to force the AI to suffer before rendering.')]
 	#[Console\Meta\Value('--quality', '[voice.conf] One of the presets: ultra_fast, fast, standard, high_quality')]
 	#[Console\Meta\Value('--top-p', '[voice.conf] Feels like it controls the range of pitch inflections allowed. Larger being a larger range. (0.0-1.0)')]
@@ -92,6 +93,7 @@ extends Console\Client {
 		$Config->Exec->KeepCombined = $this->GetOption('keep-combined') ?? $Config->Exec->KeepCombined;
 		$Config->Exec->DontRename = $this->GetOption('dont-rename') ?? $Config->Exec->DontRename;
 		$Config->Exec->Label = $this->GetOption('label') ?? $Config->Exec->Label;
+		$Config->Exec->PromptPre = $this->GetOption('ppre') ?? $Config->Exec->PromptPre;
 		$Config->Exec->DryRun = $this->GetOption('dry') ?? $Config->Exec->DryRun;
 		$Config->Exec->Derp = $this->GetOption('derp') ?? $Config->Exec->Derp;
 
@@ -804,8 +806,22 @@ extends Console\Client {
 		if(is_string($Text)) {
 			$Text = new Datastore(explode("\n", $Text));
 
-			$Text
-			->Remap(fn(string $Line)=> trim($Line));
+			// trim up the input.
+
+			$Text->Remap(
+				fn(string $Line)
+				=> trim($Line)
+			);
+
+			// setup prompt engineering.
+
+			if($Config->Exec->PromptPre)
+			$Text->Remap(
+				fn(string $Line)
+				=> "[{$Config->Exec->PromptPre}] {$Line}"
+			);
+
+			// process line selections.
 
 			if(is_string($Lines))
 			$Lines = $this->ProcessLines($Lines);
