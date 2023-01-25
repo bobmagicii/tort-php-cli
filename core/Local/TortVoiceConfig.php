@@ -2,11 +2,12 @@
 
 namespace Local;
 
+use Nether\Common;
+
 use Exception;
-use Nether\Object\Prototype;
 
 class TortVoiceConfig
-extends Prototype {
+extends Common\Prototype {
 
 	// preset name that our settings start from.
 	// ultra_fast, fast, standard, high_quality

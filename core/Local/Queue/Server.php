@@ -7,7 +7,7 @@ use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
 use React\ChildProcess\Process;
 use React\Socket\ConnectionInterface;
-use Nether\Object\Datastore;
+use Nether\Common\Datastore;
 use Nether\Console\Client;
 
 class Server {

@@ -2,9 +2,10 @@
 
 namespace Local;
 
+use Nether\Common;
+
 use SplFileInfo;
 use FilesystemIterator;
-use Nether\Object\Datastore;
 
 class TortDirectorySequencer {
 
@@ -28,7 +29,7 @@ class TortDirectorySequencer {
 	void {
 
 		$Files = $this->GetFiles();
-		$Seqs = new Datastore;
+		$Seqs = new Common\Datastore;
 		$Min = NULL;
 		$Iter = NULL;
 		$Dir = NULL;
@@ -37,7 +38,7 @@ class TortDirectorySequencer {
 		// seeing which line has the fewest files.
 
 		$Min = $Files->Accumulate(PHP_INT_MAX, (
-			fn(int $Carry, Datastore $Line)
+			fn(int $Carry, Common\Datastore $Line)
 			=> min($Carry, $Line->Count())
 		));
 
@@ -54,7 +55,7 @@ class TortDirectorySequencer {
 				($Iter + 1)
 			);
 
-			$Seqs->Shove($Dir, new Datastore);
+			$Seqs->Shove($Dir, new Common\Datastore);
 
 			foreach($Files as $Line)
 			$Seqs[$Dir]->Push($Line[$Iter]);
@@ -63,7 +64,7 @@ class TortDirectorySequencer {
 		// move all the files that were indexed into their final resting
 		// places.
 
-		$Seqs->Each(function(Datastore $Files, string $SeqDir) {
+		$Seqs->Each(function(Common\Datastore $Files, string $SeqDir) {
 
 			if(!is_dir($SeqDir))
 			mkdir($SeqDir, 0777, TRUE);
@@ -86,9 +87,9 @@ class TortDirectorySequencer {
 
 	protected function
 	GetFiles():
-	Datastore {
+	Common\Datastore {
 
-		$Files = new Datastore;
+		$Files = new Common\Datastore;
 		$Iter = new FilesystemIterator($this->Path, (
 			0
 			| FilesystemIterator::KEY_AS_PATHNAME
@@ -113,7 +114,7 @@ class TortDirectorySequencer {
 			list($Prefix, $Discard) = explode('_', $Name, 2);
 
 			if(!$Files->HasKey($Prefix))
-			$Files->Shove($Prefix, new Datastore);
+			$Files->Shove($Prefix, new Common\Datastore);
 
 			$Files[$Prefix]->Push($Name);
 		}

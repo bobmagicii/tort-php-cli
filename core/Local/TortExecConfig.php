@@ -2,11 +2,12 @@
 
 namespace Local;
 
+use Nether\Common;
+
 use Exception;
-use Nether\Object\Prototype;
 
 class TortExecConfig
-extends Prototype {
+extends Common\Prototype {
 
 	public ?string
 	$TortoiseTTS = 'tortoise-tts/scripts/tortoise_tts.py';

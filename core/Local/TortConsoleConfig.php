@@ -2,10 +2,10 @@
 
 namespace Local;
 
-use Nether\Object\Prototype;
+use Nether\Common;
 
 class TortConsoleConfig
-extends Prototype {
+extends Common\Prototype {
 
 	public string
 	$OutputDatestamp = 'Ymd-His-v';

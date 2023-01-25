@@ -4,13 +4,13 @@ namespace Local;
 
 use React;
 use Nether\Console;
+use Nether\Common;
 
 use Phar;
 use DateTime;
 use SplFileInfo;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use Nether\Object\Datastore;
 
 class TortConsoleApp
 extends Console\Client {
@@ -118,7 +118,7 @@ extends Console\Client {
 		// local use variables.
 
 		$Verbose = $this->GetOption('verbose') ?? FALSE;
-		$Commands = new Datastore;
+		$Commands = new Common\Datastore;
 		$TortoiseTTS = NULL;
 		$VoiceDir = NULL;
 		$RunMode = static::RunModeText;
@@ -183,7 +183,7 @@ extends Console\Client {
 
 		if($File && !$Lines) {
 			$RunMode = static::RunModeFile;
-			$Text = new Datastore([ $File ]);
+			$Text = new Common\Datastore([ $File ]);
 		}
 
 		////////
@@ -322,7 +322,7 @@ extends Console\Client {
 		// if we have a map of lines that we wanted generated then filter
 		// out the skips leaving the indexing intact.
 
-		if($Lines instanceof Datastore)
+		if($Lines instanceof Common\Datastore)
 		$Commands->Filter(
 			fn(string $Cmd, int $CmdIter)
 			=> $Lines->HasValue($CmdIter + 1)
@@ -550,10 +550,10 @@ extends Console\Client {
 	}
 
 	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
+	// queue management commands ///////////////////////////////////
 
 	#[Console\Meta\Command('qs')]
-	#[Console\Meta\Info('Run the queue server.')]
+	#[Console\Meta\Info('Run the queue server allowing for setting up many jobs to run in sequence. This is not needed to use this tool to run things via command or script. It is needed for the Web UI.')]
 	public function
 	QueueServer():
 	int {
@@ -572,7 +572,7 @@ extends Console\Client {
 	#[Console\Meta\Command('qstatus')]
 	#[Console\Meta\Info('Ask the queue server for status update.')]
 	public function
-	QueueQueryStatus():
+	QueueStatus():
 	int {
 
 		$Client = $this->GetQueueClient();
@@ -584,10 +584,63 @@ extends Console\Client {
 		return 0;
 	}
 
-	#[Console\Meta\Command('qcmd')]
-	#[Console\Meta\Info('Send a gen command to the queue.')]
+	#[Console\Meta\Command('qlist')]
+	#[Console\Meta\Info('Ask the queue for a list of jobs.')]
 	public function
-	QueueCommand():
+	QueueList():
+	int {
+
+		$Client = $this->GetQueueClient();
+		$Msg = $Client->Ask('status');
+
+		$this->PrintLn($this->FormatPrimary('Tort Queue Status'));
+		$this->FormatLn(' - %s: %d', $this->FormatSecondary('Pending'), $Msg->Payload['Pending']);
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qpause')]
+	#[Console\Meta\Info('Tell the queue to pause on running any new jobs.')]
+	public function
+	QueuePause():
+	int {
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qresume')]
+	#[Console\Meta\Info('Tell the queue to resume running jobs.')]
+	public function
+	QueueResume():
+	int {
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qquit')]
+	#[Console\Meta\Info('Tell the queue to terminate itself.')]
+	#[Console\Meta\Toggle('--now', 'Do not wait for the current job to finish. Do it now.')]
+	public function
+	QueueQuit():
+	int {
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qremove')]
+	#[Console\Meta\Info('Remove the specified job from the queue.')]
+	#[Console\Meta\Arg('job-id')]
+	public function
+	QueryRemove():
+	int {
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qgen')]
+	#[Console\Meta\Info('Add a generation command to the queue.')]
+	public function
+	QueueGenerate():
 	int {
 
 		$Client = $this->GetQueueClient();
@@ -599,7 +652,7 @@ extends Console\Client {
 	}
 
 	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
+	// just devvy things ///////////////////////////////////////////
 
 	#[Console\Meta\Command('phar', TRUE)]
 	#[Console\Meta\Info('Compile a tort.phar for easy use/distribution.')]
@@ -655,7 +708,21 @@ extends Console\Client {
 		return 0;
 	}
 
-	#[Console\Meta\Command('test', TRUE)]
+	#[Console\Meta\Command('qcmd', TRUE)]
+	#[Console\Meta\Info('Send any Tort command to the queue.')]
+	public function
+	QueueCommand():
+	int {
+
+		$Client = $this->GetQueueClient();
+		$Client->Send('cmd', [
+			'Args' => array_slice($_SERVER['argv'], 2)
+		]);
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('testlongtime', TRUE)]
 	public function
 	TestLongTime():
 	int {
@@ -801,7 +868,7 @@ extends Console\Client {
 	////////////////////////////////////////////////////////////////
 
 	protected function
-	MergeArgsIntoVoiceConf(TortConfigPackage $Config, Datastore $Voice):
+	MergeArgsIntoVoiceConf(TortConfigPackage $Config, Common\Datastore $Voice):
 	void {
 
 		$VoiceConf = TortVoiceConfig::FromFile($this->GetLocalPath(
@@ -869,7 +936,7 @@ extends Console\Client {
 		}
 
 		if(is_string($Text)) {
-			$Text = new Datastore(explode("\n", $Text));
+			$Text = new Common\Datastore(explode("\n", $Text));
 
 			// trim up the input.
 
@@ -899,9 +966,9 @@ extends Console\Client {
 
 	protected function
 	ProcessLines(string $Lines):
-	Datastore {
+	Common\Datastore {
 
-		$Output = new Datastore;
+		$Output = new Common\Datastore;
 		$Groups = explode(',', $Lines);
 		$Title = '';
 		$Group = NULL;
@@ -930,7 +997,7 @@ extends Console\Client {
 
 	protected function
 	ProcessVoiceChoice(string $VoiceDir, string $Voice):
-	Datastore {
+	Common\Datastore {
 
 		// handle digesting what was asked for.
 
@@ -939,7 +1006,7 @@ extends Console\Client {
 			=> $this->GetVoices($VoiceDir),
 
 			default
-			=> new Datastore(explode(',', $Voice))
+			=> new Common\Datastore(explode(',', $Voice))
 		};
 
 		// generate a dataset and do some minimal amount of sanity
@@ -1097,9 +1164,9 @@ extends Console\Client {
 
 	protected function
 	GetVoices(string $VoiceDir):
-	Datastore {
+	Common\Datastore {
 
-		$List = new Datastore(glob($this->GetLocalPath(
+		$List = new Common\Datastore(glob($this->GetLocalPath(
 			$VoiceDir, '*'
 		)));
 
@@ -1112,11 +1179,11 @@ extends Console\Client {
 
 	protected function
 	GetPharIndex():
-	Datastore {
+	Common\Datastore {
 
 		$Dirs = [ 'core', 'vendor' ];
 		$Files = [ 'tort.php', 'composer.json', 'composer.lock' ];
-		$Index = new Datastore;
+		$Index = new Common\Datastore;
 		$DS = DIRECTORY_SEPARATOR;
 
 		$Dir = NULL;

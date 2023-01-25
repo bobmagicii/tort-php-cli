@@ -2,25 +2,28 @@
 
 namespace Local\Queue;
 
-use Nether\Object\Prototype;
-use Nether\Object\Datastore;
-use Nether\Object\Prototype\ConstructArgs;
-use Nether\Object\Meta\PropertyObjectify;
+use Nether\Common;
 
 class Message
-extends Prototype {
+extends Common\Prototype {
+
+	public string
+	$ID;
 
 	public string
 	$Type = 'none';
 
-	public array|Datastore
+	public array|Common\Datastore
 	$Payload = [];
 
 	protected function
-	OnReady(ConstructArgs $Args):
+	OnReady(Common\Prototype\ConstructArgs $Args):
 	void {
 
-		$this->Payload = new Datastore(
+		if(!isset($this->ID))
+		$this->ID = Common\UUID::V4();
+
+		$this->Payload = new Common\Datastore(
 			isset($this->Payload) && is_array($this->Payload)
 			? $this->Payload : []
 		);
