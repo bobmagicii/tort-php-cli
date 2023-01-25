@@ -1,7 +1,9 @@
 {
 	"minimum-stability": "dev",
 	"require": {
-		"netherphp/console": "dev-redux"
+		"netherphp/console": "dev-redux",
+		"react/react": "1.x-dev",
+		"react/child-process": "0.7.x-dev"
 	},
 	"autoload": {
 		"psr-0": {

@@ -2,6 +2,7 @@
 
 namespace Local;
 
+use React;
 use Nether\Console;
 
 use Phar;
@@ -17,7 +18,8 @@ extends Console\Client {
 	const
 	AppName    = 'Tort',
 	AppDesc    = 'PHP-CLI Wrapper for TorToiSe TTS',
-	AppVersion = '1.0.2-dev';
+	AppVersion = '1.0.2-dev',
+	AppDebug   = TRUE;
 
 	const
 	DefaultVoice     = 'train_atkins',
@@ -547,6 +549,58 @@ extends Console\Client {
 		return 0;
 	}
 
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
+	#[Console\Meta\Command('qs')]
+	#[Console\Meta\Info('Run the queue server.')]
+	public function
+	QueueServer():
+	int {
+
+		$Loop = React\EventLoop\Loop::Get();
+
+		$Server = new Queue\Server($this, Loop: $Loop);
+		$Server->Run();
+
+		$Loop->Run();
+		$this->PrintLn('bye');
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qstatus')]
+	#[Console\Meta\Info('Ask the queue server for status update.')]
+	public function
+	QueueQueryStatus():
+	int {
+
+		$Client = $this->GetQueueClient();
+		$Msg = $Client->Ask('status');
+
+		$this->PrintLn($this->FormatPrimary('Tort Queue Status'));
+		$this->FormatLn(' - %s: %d', $this->FormatSecondary('Pending'), $Msg->Payload['Pending']);
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('qcmd')]
+	#[Console\Meta\Info('Send a gen command to the queue.')]
+	public function
+	QueueCommand():
+	int {
+
+		$Client = $this->GetQueueClient();
+		$Client->Send('cmd', [
+			'Args' => array_slice($_SERVER['argv'], 2)
+		]);
+
+		return 0;
+	}
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
 	#[Console\Meta\Command('phar', TRUE)]
 	#[Console\Meta\Info('Compile a tort.phar for easy use/distribution.')]
 	public function
@@ -597,6 +651,17 @@ extends Console\Client {
 			$this->Repath("{$BaseDir}/LICENSE.md"),
 			$this->Repath("{$BaseDir}/build/tort/LICENSE.md")
 		);
+
+		return 0;
+	}
+
+	#[Console\Meta\Command('test', TRUE)]
+	public function
+	TestLongTime():
+	int {
+
+		$this->PrintLn('workin hard for 20sec');
+		sleep(20);
 
 		return 0;
 	}
@@ -1122,6 +1187,26 @@ extends Console\Client {
 		$Output .= $Info;
 
 		return $Output;
+	}
+
+	protected function
+	GetQueueClient():
+	Queue\Client {
+
+		$Host = $this->GetOption('host') ?? '127.0.0.1';
+		$Port = $this->GetOption('port') ?? 42001;
+
+		$Client = new Queue\Client($Host, $Port);
+
+		try { $Client->Connect(); }
+		catch(Queue\Error\ClientConnectFail $Err) {
+			$this->PrintLn($Err->GetMessage());
+			return 1;
+		}
+
+		$this->FormatLn('connected to %s:%s', $Host, $Port);
+
+		return $Client;
 	}
 
 }
