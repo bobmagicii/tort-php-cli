@@ -571,30 +571,76 @@ extends Console\Client {
 
 	#[Console\Meta\Command('qstatus')]
 	#[Console\Meta\Info('Ask the queue server for status update.')]
+	#[Console\Meta\Toggle('--list', 'List the IDs of the jobs in the queue.')]
+	#[Console\Meta\Toggle('--full', 'List the full info of jobs in the queue.')]
 	public function
 	QueueStatus():
 	int {
 
 		$Client = $this->GetQueueClient();
-		$Msg = $Client->Ask('status');
+		$ShowList = $this->GetOption('list') ?? FALSE;
+		$ShowFull = $this->GetOption('full') ?? FALSE;
 
-		$this->PrintLn($this->FormatPrimary('Tort Queue Status'));
-		$this->FormatLn(' - %s: %d', $this->FormatSecondary('Pending'), $Msg->Payload['Pending']);
+		if($ShowFull)
+		$ShowList = TRUE;
 
-		return 0;
-	}
+		////////
 
-	#[Console\Meta\Command('qlist')]
-	#[Console\Meta\Info('Ask the queue for a list of jobs.')]
-	public function
-	QueueList():
-	int {
+		$Msg = $Client->Send('status');
+		$NumRunning = count($Msg->Payload['Running']);
+		$NumQueued = count($Msg->Payload['Queued']);
 
-		$Client = $this->GetQueueClient();
-		$Msg = $Client->Ask('status');
+		////////
 
-		$this->PrintLn($this->FormatPrimary('Tort Queue Status'));
-		$this->FormatLn(' - %s: %d', $this->FormatSecondary('Pending'), $Msg->Payload['Pending']);
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Status:'),
+			$NumRunning ? 'Running' : 'Idle'
+		);
+
+		////////
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Running:'),
+			$NumRunning
+		);
+
+		if($ShowList)
+		foreach($Msg->Payload['Running'] as $Job) {
+			$Job = new Queue\ServerJob($Job);
+
+			if($ShowFull) {
+				$this->FormatLn(' - %s', $this->FormatSecondary($Job->ID));
+				$this->FormatLn('   %s', json_encode($Job->Payload));
+				$this->PrintLn();
+				continue;
+			}
+
+			$this->FormatLn(' - %s', $Job->ID);
+		}
+
+		////////
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Queued:'),
+			$NumQueued
+		);
+
+		if($ShowList)
+		foreach($Msg->Payload['Queued'] as $Job) {
+			$Job = new Queue\ServerJob($Job);
+
+			if($ShowFull) {
+				$this->FormatLn(' - %s', $this->FormatSecondary($Job->ID));
+				$this->FormatLn('   %s', json_encode($Job->Payload));
+				$this->PrintLn();
+				continue;
+			}
+
+			$this->FormatLn(' - %s', $Job->ID);
+		}
 
 		return 0;
 	}
@@ -715,9 +761,11 @@ extends Console\Client {
 	int {
 
 		$Client = $this->GetQueueClient();
-		$Client->Send('cmd', [
+		$Msg = $Client->Send('cmd', [
 			'Args' => array_slice($_SERVER['argv'], 2)
 		]);
+
+		print_r($Msg);
 
 		return 0;
 	}
@@ -727,8 +775,8 @@ extends Console\Client {
 	TestLongTime():
 	int {
 
-		$this->PrintLn('workin hard for 20sec');
-		sleep(20);
+		$this->PrintLn('workin hard for 60sec');
+		sleep(60);
 
 		return 0;
 	}
@@ -1270,8 +1318,6 @@ extends Console\Client {
 			$this->PrintLn($Err->GetMessage());
 			return 1;
 		}
-
-		$this->FormatLn('connected to %s:%s', $Host, $Port);
 
 		return $Client;
 	}

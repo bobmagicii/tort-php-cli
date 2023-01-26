@@ -57,7 +57,7 @@ class Client {
 	}
 
 	public function
-	Ask(string $Type, array $Payload=[]):
+	Send(string $Type, array $Payload=[]):
 	Message {
 
 		$Msg = Message::New(Type: $Type, Payload: $Payload);
@@ -67,19 +67,6 @@ class Client {
 		$Resp = Message::FromJSON(fgets($this->Socket));
 
 		return $Resp;
-	}
-
-	public function
-	Send(string $Type, array $Payload=[]):
-	static {
-
-		$Msg = Message::New(Type: $Type, Payload: $Payload);
-		$Data = json_encode($Msg);
-
-		fwrite($this->Socket, "{$Data}\n");
-		$Resp = Message::FromJSON(fgets($this->Socket));
-
-		return $this;
 	}
 
 }

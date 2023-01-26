@@ -2,15 +2,35 @@
 
 namespace Local\Queue;
 
+use React;
+
 use Throwable;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
-use React\ChildProcess\Process;
 use React\Socket\ConnectionInterface;
 use Nether\Common\Datastore;
 use Nether\Console\Client;
 
 class Server {
+
+	public Client
+	$CLI;
+
+	public Datastore
+	$Queue;
+
+	public Datastore
+	$Running;
+
+	public int
+	$MaxRunning = 1;
+
+	public ?LoopInterface
+	$Loop;
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
 
 	protected string
 	$Host;
@@ -18,26 +38,11 @@ class Server {
 	protected int
 	$Port;
 
-	protected Client
-	$CLI;
-
 	protected SocketServer
 	$Server;
 
 	protected Datastore
 	$Clients;
-
-	protected Datastore
-	$Queue;
-
-	protected int
-	$Running = 0;
-
-	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
-
-	protected ?LoopInterface
-	$Loop;
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
@@ -48,10 +53,11 @@ class Server {
 		$this->Host = $Host;
 		$this->Port = $Port;
 		$this->CLI = $CLI;
-		$this->Loop = $Loop;
+		$this->Loop = $Loop ?? Loop::Get();
 
 		$this->Clients = new Datastore;
 		$this->Queue = new Datastore;
+		$this->Running = new Datastore;
 
 		return;
 	}
@@ -76,20 +82,12 @@ class Server {
 		////////
 
 		$this->FormatLn(
-			'started %s',
+			'%s %s',
+			$this->CLI->FormatSecondary('Server Started:'),
 			$URI
 		);
 
 		return;
-	}
-
-	public function
-	GetQueueStatus():
-	array {
-
-		return [
-			'Pending' => $this->Queue->Count()
-		];
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -99,11 +97,9 @@ class Server {
 	Kick():
 	static {
 
-		if($this->Running < 1)
-		if($this->Queue->Count() > 0) {
-			$this->FormatLn('%d things need doed', $this->Queue->Count());
-			$this->Next();
-		}
+		if($this->Running->Count() < $this->MaxRunning)
+		if($this->Queue->Count() > 0)
+		$this->Next();
 
 		return $this;
 	}
@@ -112,50 +108,11 @@ class Server {
 	Next():
 	static {
 
-		$Job = $this->Queue->Pop();
-		/** @var Message $Job */
-
-		$this->FormatLn(
-			'starting job: %s',
-			json_encode($Job)
-		);
-
+		$Job = $this->Queue->Shift();
 
 		switch($Job->Type) {
 			case 'cmd':
-				$Cmd = sprintf(
-					'php %s %s',
-					realpath($_SERVER['SCRIPT_FILENAME']),
-					join(' ', $Job->Payload['Args'])
-				);
-
-				$Proc = new Process(
-					$Cmd,
-					NULL,
-					NULL,
-					[ [ 'socket' ], [ 'socket' ], [ 'socket' ] ]
-				);
-
-				$Proc->Start($this->Loop);
-
-				if($Proc->IsRunning()) {
-					$this->Running += 1;
-					$this->PrintLn('job start');
-
-					$Proc->stdout->on('data', function(string $Data){
-						$Data = trim($Data);
-						$this->PrintLn("data: {$Data}");
-						return;
-					});
-
-					$Proc->on('exit', function(){
-						$this->Running -= 1;
-						$this->PrintLn('done');
-						$this->Kick();
-						return;
-					});
-				}
-
+				$Job->Run();
 			break;
 		}
 
@@ -163,20 +120,22 @@ class Server {
 	}
 
 	public function
-	Push(mixed $Job):
-	static {
+	Push(Message $Msg):
+	ServerJob {
+
+		$Job = ServerJob::FromMessage($this, $Msg);
 
 		$this->Queue->Push($Job);
 
 		$this->FormatLn(
-			'added job: %s (queue size: %d)',
-			json_encode($Job),
-			$this->Queue->Count()
+			'%s %s',
+			$this->CLI->FormatSecondary('Job Queued:'),
+			$Job->ID
 		);
 
 		$this->Kick();
 
-		return $this;
+		return $Job;
 	}
 
 	////////////////////////////////////////////////////////////////

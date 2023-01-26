@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59c178fa9bcbfa31ca89fea10c6698dd",
+    "content-hash": "e82545cc2c0639ffe6eff4f778a8e9c4",
     "packages": [
         {
             "name": "brick/math",
@@ -167,7 +167,7 @@
         },
         {
             "name": "netherphp/common",
-            "version": "dev-master",
+            "version": "v5.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/netherphp/common.git",
@@ -188,7 +188,6 @@
                 "netherphp/standards": ">=0.1.9",
                 "phpunit/phpunit": "^9.5"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -214,7 +213,7 @@
             ],
             "support": {
                 "issues": "https://github.com/netherphp/common/issues",
-                "source": "https://github.com/netherphp/common/tree/master"
+                "source": "https://github.com/netherphp/common/tree/v5.0.5"
             },
             "time": "2023-01-25T20:23:57+00:00"
         },
@@ -224,17 +223,17 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/netherphp/console.git",
-                "reference": "e29822f06d2a43d9a54a63a334df4d429394970c"
+                "reference": "ec5ec53417ce514ccf842f96d38233d8f50bd591"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/netherphp/console/zipball/e29822f06d2a43d9a54a63a334df4d429394970c",
-                "reference": "e29822f06d2a43d9a54a63a334df4d429394970c",
+                "url": "https://api.github.com/repos/netherphp/console/zipball/ec5ec53417ce514ccf842f96d38233d8f50bd591",
+                "reference": "ec5ec53417ce514ccf842f96d38233d8f50bd591",
                 "shasum": ""
             },
             "require": {
-                "netherphp/common": "dev-master",
-                "php": ">=8.0"
+                "netherphp/common": "^5.0.5",
+                "php": ">=8.1"
             },
             "require-dev": {
                 "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
@@ -274,7 +273,7 @@
                 "issues": "https://github.com/netherphp/console/issues",
                 "source": "https://github.com/netherphp/console/tree/redux"
             },
-            "time": "2023-01-25T20:52:55+00:00"
+            "time": "2023-01-26T05:43:26+00:00"
         },
         {
             "name": "psr/http-message",
@@ -1528,7 +1527,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "netherphp/common": 20,
         "netherphp/console": 20
     },
     "prefer-stable": true,

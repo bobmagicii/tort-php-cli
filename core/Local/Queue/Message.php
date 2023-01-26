@@ -23,10 +23,16 @@ extends Common\Prototype {
 		if(!isset($this->ID))
 		$this->ID = Common\UUID::V4();
 
-		$this->Payload = new Common\Datastore(
+		$this->Payload = match(TRUE) {
 			isset($this->Payload) && is_array($this->Payload)
-			? $this->Payload : []
-		);
+			=> new Common\Datastore($this->Payload),
+
+			isset($this->Payload) && $this->Payload instanceof Common\Datastore
+			=> $this->Payload,
+
+			default
+			=> new Common\Datastore([])
+		};
 
 		return;
 	}

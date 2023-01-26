@@ -11,7 +11,8 @@ class ServerClient {
 	const
 	MsgTypeMap = [
 		'cmd'    => 'OnMsgQueueCommand',
-		'status' => 'OnMsgQueryStatus'
+		'status' => 'OnMsgQueryStatus',
+		'list'   => 'OnMsgQueryList'
 	];
 
 	////////////////////////////////////////////////////////////////
@@ -152,8 +153,12 @@ class ServerClient {
 	OnMsgQueueCommand(Message $Msg):
 	void {
 
-		$this->Server->Push($Msg);
-		$this->OnMsgQueryStatus($Msg);
+		$Job = $this->Server->Push($Msg);
+
+		$this->Send('job', [
+			'ID'=> $Job->ID,
+			'Payload'=> $Job->Payload
+		]);
 
 		return;
 	}
@@ -162,9 +167,35 @@ class ServerClient {
 	OnMsgQueryStatus(Message $Msg):
 	void {
 
-		$Status = $this->Server->GetQueueStatus();
+		$Running = (
+			$this->Server->Running
+			->Map(fn(array $Entry)=> [ 'ID'=> $Entry['Job']->ID, 'Payload'=> $Entry['Job']->Payload ])
+			->Values()
+		);
 
-		$this->Send('status', $Status);
+		$Queued = (
+			$this->Server->Queue
+			->Map(fn(ServerJob $Job)=> [ 'ID'=> $Job->ID, 'Payload'=> $Job->Payload ])
+			->Values()
+		);
+
+		$this->Send('status', [
+			'Running' => $Running,
+			'Queued'  => $Queued
+		]);
+
+		return;
+	}
+
+	protected function
+	OnMsgQueryList(Message $Msg):
+	void {
+
+		$this->Send('list', [
+			'Running' => $this->Server->Running->GetData(),
+			'Queue' => $this->Server->Queue->GetData()
+		]);
+
 		return;
 	}
 
