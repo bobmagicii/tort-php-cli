@@ -67,7 +67,7 @@ extends Console\Client {
 	#[Console\Meta\Error(6, 'fun aborted')]
 	#[Console\Meta\Error(7, 'unable to create output dir (%s)')]
 	public function
-	Generate():
+	CmdGenerate():
 	int {
 
 		$Config = new TortConfigPackage(
@@ -449,7 +449,7 @@ extends Console\Client {
 	#[Console\Meta\Command('voices')]
 	#[Console\Meta\Info('Lists all the installed voices.')]
 	public function
-	VoiceList():
+	CmdVoiceList():
 	int {
 
 		$Config = new TortConfigPackage;
@@ -483,7 +483,7 @@ extends Console\Client {
 	#[Console\Meta\Info('Generate a default voice.json file for a voice.')]
 	#[Console\Meta\Arg('voice')]
 	public function
-	VoiceConf():
+	CmdVoiceConf():
 	int {
 
 		$Config = new TortConfigPackage;
@@ -517,16 +517,22 @@ extends Console\Client {
 	}
 
 	#[Console\Meta\Command('seqdir')]
-	#[Console\Meta\Info('Resequence a directory of lines into folders one of each line in the folder.')]
-	#[Console\Meta\Arg('directory-of-lines')]
-	#[Console\Meta\Toggle('--copy', 'Copy files instead or move them.')]
+	#[Console\Meta\Info('Resequence a directory of lines into folders one of each line in the folder. Without any toggle options it will just print a summary.')]
+	#[Console\Meta\Arg('dir')]
+	#[Console\Meta\Toggle('--sort', 'Sort the summary by how many files for each line there are.')]
+	#[Console\Meta\Toggle('--copy', 'Copy files into sequenced set directories.')]
+	#[Console\Meta\Toggle('--move', 'Move files into sequenced set sirectories.')]
 	#[Console\Meta\Error(1, 'no --dir specified')]
+	#[Console\Meta\Error(2, 'directory not found %s')]
 	public function
-	SequenceDir():
+	CmdSequenceDir():
 	int {
 
 		$Path = $this->GetInput(1) ?? $this->GetOption('path');
 		$Copy = $this->GetOption('copy') ?? FALSE;
+		$Move = $this->GetOption('move') ?? FALSE;
+		$Sort = $this->GetOption('sort') ?? FALSE;
+		$Check = (!$Copy && !$Move);
 
 		if(!$Path)
 		$this->Quit(1);
@@ -535,15 +541,37 @@ extends Console\Client {
 
 		$Path = $this->GetLocalPath($Path);
 
+		if(!is_dir($Path))
+		$this->Quit(2, $Path);
+
+		////////
+
 		$this->FormatLn(
 			'%s %s',
 			$this->FormatPrimary('Sequencing Directory:'),
 			$Path
 		);
 
+		$Tool = new TortDirectorySequencer($Path, ($Copy && !$Move));
+		$Files = $Tool->GetFiles();
+		$Max = $Tool->CheckMaxSets($Files);
+		$Counts = $Files->Map(fn($Line)=> $Line->Count());
+
+		if($Sort)
+		$Counts->Sort();
+
+		$this->FormatLn(
+			'%s %d',
+			$this->FormatPrimary('Max Sets:'),
+			$Max
+		);
+
+		foreach($Counts as $Key => $Count)
+		$this->FormatLn('- %s: %s', $Key, $Count);
+
 		////////
 
-		$Tool = new TortDirectorySequencer($Path, $Copy);
+		if(!$Check)
 		$Tool->Run();
 
 		return 0;

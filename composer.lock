@@ -167,16 +167,16 @@
         },
         {
             "name": "netherphp/common",
-            "version": "v5.0.5",
+            "version": "v5.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/netherphp/common.git",
-                "reference": "a3826e434669acdb893f957f2fd3d6233aa601b1"
+                "reference": "aace8471669d9672a78ed4e7257f0821e0eb51ef"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/netherphp/common/zipball/a3826e434669acdb893f957f2fd3d6233aa601b1",
-                "reference": "a3826e434669acdb893f957f2fd3d6233aa601b1",
+                "url": "https://api.github.com/repos/netherphp/common/zipball/aace8471669d9672a78ed4e7257f0821e0eb51ef",
+                "reference": "aace8471669d9672a78ed4e7257f0821e0eb51ef",
                 "shasum": ""
             },
             "require": {
@@ -213,9 +213,9 @@
             ],
             "support": {
                 "issues": "https://github.com/netherphp/common/issues",
-                "source": "https://github.com/netherphp/common/tree/v5.0.5"
+                "source": "https://github.com/netherphp/common/tree/v5.0.6"
             },
-            "time": "2023-01-25T20:23:57+00:00"
+            "time": "2023-01-29T06:00:52+00:00"
         },
         {
             "name": "netherphp/console",

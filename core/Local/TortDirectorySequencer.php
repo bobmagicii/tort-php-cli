@@ -25,67 +25,6 @@ class TortDirectorySequencer {
 	}
 
 	public function
-	Run():
-	void {
-
-		$Files = $this->GetFiles();
-		$Seqs = new Common\Datastore;
-		$Min = NULL;
-		$Iter = NULL;
-		$Dir = NULL;
-
-		// figure out the maximum number of full sets we can make by
-		// seeing which line has the fewest files.
-
-		$Min = $Files->Accumulate(PHP_INT_MAX, (
-			fn(int $Carry, Common\Datastore $Line)
-			=> min($Carry, $Line->Count())
-		));
-
-		// prepare directories for all the full sets and index one file
-		// from each complete set of lines for them.
-
-		for($Iter = 0; $Iter < $Min; $Iter++) {
-			$Dir = sprintf(
-				'%s%s%s%sseq%\'03d',
-				$this->Path,
-				DIRECTORY_SEPARATOR,
-				'seqs',
-				DIRECTORY_SEPARATOR,
-				($Iter + 1)
-			);
-
-			$Seqs->Shove($Dir, new Common\Datastore);
-
-			foreach($Files as $Line)
-			$Seqs[$Dir]->Push($Line[$Iter]);
-		}
-
-		// move all the files that were indexed into their final resting
-		// places.
-
-		$Seqs->Each(function(Common\Datastore $Files, string $SeqDir) {
-
-			if(!is_dir($SeqDir))
-			mkdir($SeqDir, 0777, TRUE);
-
-			foreach($Files as $File) {
-				$Src = sprintf('%s%s%s', $this->Path, DIRECTORY_SEPARATOR, $File);
-				$Dst = sprintf('%s%s%s', $SeqDir, DIRECTORY_SEPARATOR, $File);
-
-				if($this->Copy)
-				copy($Src, $Dst);
-				else
-				rename($Src, $Dst);
-			}
-
-			return;
-		});
-
-		return;
-	}
-
-	protected function
 	GetFiles():
 	Common\Datastore {
 
@@ -121,5 +60,74 @@ class TortDirectorySequencer {
 
 		return $Files;
 	}
+
+	public function
+	CheckMaxSets(Common\Datastore $Files):
+	int {
+
+		// figure out the maximum number of full sets we can make by
+		// seeing which line has the fewest files.
+
+		$Max = $Files->Accumulate(PHP_INT_MAX, (
+			fn(int $Carry, Common\Datastore $Line)
+			=> min($Carry, $Line->Count())
+		));
+
+		return $Max;
+	}
+
+	public function
+	Run():
+	void {
+
+		$Files = $this->GetFiles();
+		$MaxSets = $this->CheckMaxSets($Files);
+		$Seqs = new Common\Datastore;
+		$Iter = NULL;
+		$Dir = NULL;
+
+		// prepare directories for all the full sets and index one file
+		// from each complete set of lines for them.
+
+		for($Iter = 0; $Iter < $MaxSets; $Iter++) {
+			$Dir = Common\Filesystem\Util::Pathify(
+				$this->Path,
+				'seqs',
+				sprintf('seq%\'03d', ($Iter + 1))
+			);
+
+			$Seqs->Shove($Dir, new Common\Datastore);
+
+			foreach($Files as $Line)
+			$Seqs[$Dir]->Push($Line[$Iter]);
+		}
+
+		// move all the files that were indexed into their final resting
+		// places.
+
+		$Seqs->Each(function(Common\Datastore $Files, string $SeqDir) {
+
+			if(!is_dir($SeqDir))
+			mkdir($SeqDir, 0777, TRUE);
+
+			$Files->Shuffle();
+
+			foreach($Files as $File) {
+				$Src = Common\Filesystem\Util::Pathify($this->Path, $File);
+				$Dst = Common\Filesystem\Util::Pathify($SeqDir, $File);
+
+				if($this->Copy)
+				copy($Src, $Dst);
+				else
+				rename($Src, $Dst);
+			}
+
+			return;
+		});
+
+		return;
+	}
+
+
 
 }
