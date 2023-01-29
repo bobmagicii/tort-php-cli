@@ -1,4 +1,5 @@
 {
 	"CheckForConda": true,
+	"DefaultVoice": "train_atkins",
 	"OutputDatestamp": "Ymd-His-v"
 }

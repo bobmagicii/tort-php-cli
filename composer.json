@@ -10,5 +10,14 @@
 		"psr-0": {
 			"Local\\": "core/"
 		}
+	},
+	"require-dev": {
+		"netherphp/standards": "^0.2.8",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
 	}
 }

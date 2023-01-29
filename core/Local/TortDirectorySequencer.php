@@ -111,6 +111,7 @@ class TortDirectorySequencer {
 			mkdir($SeqDir, 0777, TRUE);
 
 			$Files->Shuffle();
+			$File = NULL;
 
 			foreach($Files as $File) {
 				$Src = Common\Filesystem\Util::Pathify($this->Path, $File);

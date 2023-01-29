@@ -22,12 +22,6 @@ extends Console\Client {
 	AppDebug   = TRUE;
 
 	const
-	DefaultVoice     = 'train_atkins',
-	DefaultGenCount  = 3,
-	DefaultLengthMin = 300,
-	DefaultLengthMax = 400;
-
-	const
 	RunModeNone = 0,
 	RunModeText = 1,
 	RunModeFile = 2;
@@ -88,7 +82,7 @@ extends Console\Client {
 		$Config->Exec->File = $this->GetOption('file') ?? $Config->Exec->File;
 		$Config->Exec->Lines = $this->GetOption('lines') ?? $Config->Exec->Lines;
 		$Config->Exec->Seed = $this->GetOption('seed') ?? $Config->Exec->Seed;
-		$Config->Exec->Voice = $this->GetOption('voice') ?? $Config->Exec->Voice;
+		$Config->Exec->Voice = $this->GetOption('voice') ?? $Config->App->DefaultVoice;
 		$Config->Exec->GenCount = $this->GetOption('count') ?? $Config->Exec->GenCount;
 		$Config->Exec->TextLenMin = $this->GetOption('len-min') ?? $Config->Exec->TextLenMin;
 		$Config->Exec->TextLenMax = $this->GetOption('len-max') ?? $Config->Exec->TextLenMax;
@@ -527,6 +521,9 @@ extends Console\Client {
 	CmdSequenceDir():
 	int {
 
+		$Key = NULL;
+		$Count = NULL;
+
 		$Path = $this->GetInput(1) ?? $this->GetOption('path');
 		$Copy = $this->GetOption('copy') ?? FALSE;
 		$Move = $this->GetOption('move') ?? FALSE;
@@ -555,6 +552,8 @@ extends Console\Client {
 		$Files = $Tool->GetFiles();
 		$Max = $Tool->CheckMaxSets($Files);
 		$Counts = $Files->Map(fn($Line)=> $Line->Count());
+		$Key = NULL;
+		$Count = NULL;
 
 		if($Sort)
 		$Counts->Sort();
@@ -603,6 +602,8 @@ extends Console\Client {
 	public function
 	QueueStatus():
 	int {
+
+		$Job = NULL;
 
 		$Client = $this->GetQueueClient();
 		$ShowList = $this->GetOption('list') ?? FALSE;
@@ -732,6 +733,8 @@ extends Console\Client {
 	public function
 	BuildPhar():
 	int {
+
+		$Item = NULL;
 
 		$BaseDir = dirname(__FILE__, 3);
 		$Index = $this->GetPharIndex();
@@ -1104,6 +1107,8 @@ extends Console\Client {
 		// the first file generated as a "combined" file even though it
 		// also saved all the candidates.
 
+		$File = NULL;
+
 		$Found = glob(Common\Filesystem\Util::Pathify(
 			$OutputDir,
 			'*_combined.wav'
@@ -1125,6 +1130,8 @@ extends Console\Client {
 	protected function
 	RenameFilesFromRun(string $OutputDir, int $CmdIter, TortConfigPackage $Conf):
 	void {
+
+		$File = NULL;
 
 		$New = NULL;
 		$Dirname = NULL;
@@ -1151,7 +1158,7 @@ extends Console\Client {
 						: ''
 					)
 				),
-				$this->ReplacePathTokens($Basename, $Conf),
+				$this->ReplacePathTokens($Basename, $Conf)
 			);
 
 			$this->FormatLn(
@@ -1180,6 +1187,8 @@ extends Console\Client {
 		// the proc_open based code was three times as long but it was
 		// better. this more or less only works because tortoise is
 		// blasting its output in full bursts.
+
+		$Data = NULL;
 
 		$PBarReg = '#(\d+)+/(\d+) \[([\d\:]+)<([\d\:]+), ([^\]]+)\]#';
 		$PBarData = NULL;
@@ -1318,7 +1327,7 @@ extends Console\Client {
 			($Label ? "[{$Label}] ": ''),
 			$Current,
 			$Total,
-			$LineNum,
+			$LineNum
 		);
 
 		if($Colour)

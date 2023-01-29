@@ -11,10 +11,29 @@ extends Common\Prototype {
 	$OutputDatestamp = 'Ymd-His-v';
 
 	public ?string
-	$OutputDir = 'output/{hostname}.{label}.{voice}.{file}.{datestamp}';
+	$OutputDir = NULL;
+
+	public ?string
+	$DefaultVoice = NULL;
 
 	public bool
 	$CheckForConda = FALSE;
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
+	protected function
+	OnReady(Common\Prototype\ConstructArgs $Args):
+	void {
+
+		if(!$this->OutputDir)
+		$this->OutputDir = 'output/{hostname}.{label}.{voice}.{file}.{datestamp}';
+
+		if(!$this->DefaultVoice)
+		$this->DefaultVoice = 'train_atkins';
+
+		return;
+	}
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
