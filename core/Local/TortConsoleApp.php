@@ -393,10 +393,9 @@ extends Console\Client {
 		// write the job file to disk so that the task can be replayed at
 		// a later date if needed.
 
-		$Config->Exec->Write(sprintf(
-			'%s%sjob.json',
+		$Config->Exec->Write(Common\Filesystem\Util::Pathify(
 			$OutputDir,
-			DIRECTORY_SEPARATOR
+			'job.json'
 		));
 
 		////////
@@ -736,7 +735,10 @@ extends Console\Client {
 
 		$BaseDir = dirname(__FILE__, 3);
 		$Index = $this->GetPharIndex();
-		$OutFile = $this->Repath("{$BaseDir}/build/tort/tort.phar");
+		$OutFile = Common\Filesystem\Util::Pathify(
+			$BaseDir, 'build', 'tort',
+			'tort.phar'
+		);
 
 		if(!is_dir(dirname($OutFile)))
 		mkdir(dirname($OutFile), 0777, TRUE);
@@ -765,18 +767,18 @@ extends Console\Client {
 		////////
 
 		copy(
-			$this->Repath("{$BaseDir}/tort.json"),
-			$this->Repath("{$BaseDir}/build/tort/tort.json")
+			Common\Filesystem\Util::Pathify($BaseDir, 'tort.json'),
+			Common\Filesystem\Util::Pathify($BaseDir, 'build', 'tort', 'tort.json')
 		);
 
 		copy(
-			$this->Repath("{$BaseDir}/README.md"),
-			$this->Repath("{$BaseDir}/build/tort/README.md")
+			Common\Filesystem\Util::Pathify($BaseDir, 'README.md'),
+			Common\Filesystem\Util::Pathify($BaseDir, 'build', 'tort', 'README.md')
 		);
 
 		copy(
-			$this->Repath("{$BaseDir}/LICENSE.md"),
-			$this->Repath("{$BaseDir}/build/tort/LICENSE.md")
+			Common\Filesystem\Util::Pathify($BaseDir, 'LICENSE.md'),
+			Common\Filesystem\Util::Pathify($BaseDir, 'build', 'tort', 'LICENSE.md')
 		);
 
 		return 0;
@@ -813,16 +815,6 @@ extends Console\Client {
 	////////////////////////////////////////////////////////////////
 
 	protected function
-	Repath(string $Input):
-	string {
-
-		if(PHP_OS_FAMILY === 'Windows')
-		$Input = str_replace('/', DIRECTORY_SEPARATOR, $Input);
-
-		return $Input;
-	}
-
-	protected function
 	GetLocalPath(...$Argv):
 	string {
 
@@ -844,14 +836,16 @@ extends Console\Client {
 		// do not mess with windows absolute paths.
 
 		if(str_starts_with($More, '\\'))
-		return $this->Repath($More);
+		return Common\Filesystem\Util::Repath($More);
 
 		if(preg_match('#^[A-Za-z]:\\\\#', $More))
-		return $this->Repath($More);
+		return Common\Filesystem\Util::Repath($More);
 
 		////////
 
-		$Path = $this->Repath(rtrim("{$Path}/{$More}"));
+		$Path = Common\Filesystem\Util::Repath(
+			Common\Filesystem\Util::Pathify($Path, $More)
+		);
 
 		return $Path;
 	}
@@ -1110,8 +1104,10 @@ extends Console\Client {
 		// the first file generated as a "combined" file even though it
 		// also saved all the candidates.
 
-		$DS = DIRECTORY_SEPARATOR;
-		$Found = glob("{$OutputDir}{$DS}*_combined.wav");
+		$Found = glob(Common\Filesystem\Util::Pathify(
+			$OutputDir,
+			'*_combined.wav'
+		));
 
 		foreach($Found as $File) {
 			$this->FormatLn(
@@ -1130,12 +1126,11 @@ extends Console\Client {
 	RenameFilesFromRun(string $OutputDir, int $CmdIter, TortConfigPackage $Conf):
 	void {
 
-		$DS = DIRECTORY_SEPARATOR;
 		$New = NULL;
 		$Dirname = NULL;
 		$Basename = NULL;
 		$OutputDir = $this->ReplacePathTokens($OutputDir, $Conf);
-		$Found = glob("{$OutputDir}{$DS}*.wav");
+		$Found = glob(Common\Filesystem\Util::Pathify($OutputDir, '*.wav'));
 
 		foreach($Found as $File) {
 			$Dirname = dirname($File);
@@ -1166,7 +1161,10 @@ extends Console\Client {
 				$New
 			);
 
-			rename($File, "{$Dirname}{$DS}{$New}");
+			rename($File, Common\Filesystem\Util::Pathify(
+				$Dirname,
+				$New
+			));
 		}
 
 		return;
