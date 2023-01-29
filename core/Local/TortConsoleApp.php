@@ -60,6 +60,7 @@ extends Console\Client {
 	#[Console\Meta\Error(5, 'file not readable (%s)')]
 	#[Console\Meta\Error(6, 'fun aborted')]
 	#[Console\Meta\Error(7, 'unable to create output dir (%s)')]
+	#[Console\Meta\Error(8, 'invalid conda env active: %s')]
 	public function
 	CmdGenerate():
 	int {
@@ -130,11 +131,7 @@ extends Console\Client {
 		// handle reminding me that i need to use conda to make it work
 		// else it will constantly be a pain.
 
-		if($Config->App->CheckForConda) {
-			if(!isset($_ENV['CONDA_DEFAULT_ENV']))
-			if(!isset($_SERVER['CONDA_DEFAULT_ENV']))
-			$this->Quit(4);
-		}
+		$this->HandleCheckingForConda($Config);
 
 		// handle me constantly forgetting the batch flag when running
 		// them from batch scripts.
@@ -1355,6 +1352,35 @@ extends Console\Client {
 		}
 
 		return $Client;
+	}
+
+	protected function
+	HandleCheckingForConda(TortConfigPackage $Config):
+	void {
+
+		if(!$Config->App->CheckForConda)
+		return;
+
+		// check that any conda env is active.
+
+		if(!isset($_ENV['CONDA_DEFAULT_ENV']))
+		if(!isset($_SERVER['CONDA_DEFAULT_ENV']))
+		$this->Quit(4);
+
+		// check that a specific conda env is active.
+
+		if(!is_string($Config->App->CheckForConda))
+		return;
+
+		if(isset($_ENV['CONDA_DEFAULT_ENV']))
+		if($_ENV['CONDA_DEFAULT_ENV'] !== $Config->App->CheckForConda)
+		$this->Quit(8, $_ENV['CONDA_DEFAULT_ENV']);
+
+		if(isset($_SERVER['CONDA_DEFAULT_ENV']))
+		if($_SERVER['CONDA_DEFAULT_ENV'] !== $Config->App->CheckForConda)
+		$this->Quit(8, $_SERVER['CONDA_DEFAULT_ENV']);
+
+		return;
 	}
 
 }

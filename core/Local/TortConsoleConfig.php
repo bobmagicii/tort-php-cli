@@ -16,7 +16,7 @@ extends Common\Prototype {
 	public ?string
 	$DefaultVoice = NULL;
 
-	public bool
+	public bool|string
 	$CheckForConda = FALSE;
 
 	////////////////////////////////////////////////////////////////
@@ -31,6 +31,10 @@ extends Common\Prototype {
 
 		if(!$this->DefaultVoice)
 		$this->DefaultVoice = 'train_atkins';
+
+		if(is_string($this->CheckForConda))
+		if(!$this->CheckForConda)
+		$this->CheckForConda = FALSE;
 
 		return;
 	}
