@@ -113,6 +113,7 @@ extends Console\Client {
 		// local use variables.
 
 		$Verbose = $this->GetOption('verbose') ?? FALSE;
+		$OutputJSON = $this->GetOption('--jsonout');
 		$Commands = new Common\Datastore;
 		$TortoiseTTS = NULL;
 		$VoiceDir = NULL;
@@ -714,9 +715,12 @@ extends Console\Client {
 	QueueGenerate():
 	int {
 
+		$Cmd = new Common\Datastore([ 'gen', '--derp', '--jsonout' ]);
+		$Cmd->MergeRight(array_slice($_SERVER['argv'], 2));
+
 		$Client = $this->GetQueueClient();
 		$Client->Send('cmd', [
-			'Args' => array_slice($_SERVER['argv'], 2)
+			'Args' => $Cmd->GetData()
 		]);
 
 		return 0;
@@ -1186,23 +1190,48 @@ extends Console\Client {
 		// blasting its output in full bursts.
 
 		$Data = NULL;
+		$TortStep = 0;
+		$TortStepMax = 3;
+		$OutputJSON = $this->GetOption('jsonout');
 
 		$PBarReg = '#(\d+)+/(\d+) \[([\d\:]+)<([\d\:]+), ([^\]]+)\]#';
 		$PBarData = NULL;
 
 		$PrefixData = $this->Formatter->DimCyan($Prefix);
 		$PrefixTime = $this->Formatter->BrightCyan($Prefix);
+		$PrefixProg = '';
 
 		$PP = popen($Cmd, 'r');
 
 		while($Data = fread($PP, 4096)) {
 			$Data = trim($Data);
 
+			$PrefixProg = $this->Formatter->BrightGreen(sprintf(
+				'[%d/%d] ',
+				$TortStep,
+				$TortStepMax
+			));
+
 			// handle if we got something that smells like progress.
 			if(preg_match($PBarReg, $Data, $PBarData)) {
+				if($OutputJSON) {
+					$this->PrintLn(json_encode([
+						'TortStep'    => $TortStep,
+						'TortStepMax' => $TortStepMax,
+						'IterCur'     => $PBarData[1],
+						'IterMax'     => $PBarData[2],
+						'IterPerSec'  => $PBarData[5],
+						'TimeSpent'   => $PBarData[3],
+						'TimeETA'     => $PBarData[4]
+					]));
+
+					continue;
+				}
+
 				printf(
-					"\r%sIter %s of %s @ %s [%s, ETA %s]",
+					"\r%s%sIter %s of %s @ %s [%s, ETA %s]",
 					$PrefixTime,
+					$PrefixProg,
 					$PBarData[1],
 					$PBarData[2],
 					$PBarData[5],
@@ -1223,14 +1252,39 @@ extends Console\Client {
 				else
 				list($Next, $Data) = [ $Data, NULL ];
 
+				$Next = trim($Next ?? '');
+
 				// ignore that annoying errant progress.
 				if(str_contains($Next, '?it/s'))
 				continue;
 
+				////////
+
+				if(str_starts_with(strtolower($Next), 'loading tts.'))
+				$TortStep = 0;
+
+				if(str_starts_with(strtolower($Next), 'generating '))
+				$TortStep = 1;
+
+				if(str_starts_with(strtolower($Next), 'computing '))
+				$TortStep = 2;
+
+				if(str_starts_with(strtolower($Next), 'transforming '))
+				$TortStep = 3;
+
+				////////
+
+				$PrefixProg = $this->Formatter->Green(sprintf(
+					'[%d/%d] ',
+					$TortStep,
+					$TortStepMax
+				));
+
 				// treat anything else as printable.
 				printf(
-					'%s%s%s',
+					'%s%s%s%s',
 					$PrefixData,
+					$PrefixProg,
 					$Next,
 					PHP_EOL
 				);

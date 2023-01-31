@@ -106,6 +106,13 @@ extends Common\Prototype {
 
 		$Data = trim($Data);
 
+		if(str_starts_with($Data, '{"TortStep":')) {
+			$this->OnProcessGenProgress(json_decode($Data));
+			return;
+		}
+
+		////////
+
 		$this->Server->FormatLn(
 			'%s %s',
 			$this->Server->CLI->FormatSecondary('Job Data:'),
@@ -113,6 +120,15 @@ extends Common\Prototype {
 		);
 
 		$this->Server->FormatLn(' ^ %s', $Data);
+
+		return;
+	}
+
+	protected function
+	OnProcessGenProgress($Data):
+	void {
+
+		print_r($Data);
 
 		return;
 	}
