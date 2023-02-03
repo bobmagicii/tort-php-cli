@@ -29,6 +29,9 @@ class Server {
 	public ?LoopInterface
 	$Loop;
 
+	public bool
+	$Debug = FALSE;
+
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
@@ -123,7 +126,7 @@ class Server {
 	Push(Message $Msg):
 	ServerJob {
 
-		$Job = ServerJob::FromMessage($this, $Msg);
+		$Job = ServerJob::FromServerMessage($this, $Msg);
 
 		$this->Queue->Push($Job);
 

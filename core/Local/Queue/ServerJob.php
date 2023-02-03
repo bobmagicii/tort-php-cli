@@ -6,9 +6,27 @@ use React;
 use Nether\Common;
 
 use Exception;
+use Local\TortJobStatus;
 
 class ServerJob
 extends Common\Prototype {
+
+	const
+	StatusPending = 0,
+	StatusLoading = 1,
+	StatusRunning = 2,
+	StatusDone    = 3;
+
+	const
+	StatusWords = [
+		self::StatusPending => 'Pending',
+		self::StatusLoading => 'Loading',
+		self::StatusRunning => 'Running',
+		self::StatusDone    => 'Done'
+	];
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
 
 	public string
 	$ID;
@@ -18,6 +36,12 @@ extends Common\Prototype {
 
 	public array|Common\Datastore
 	$Payload = [];
+
+	public int
+	$Status = self::StatusPending;
+
+	public ?TortJobStatus
+	$StatusData = NULL;
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
@@ -56,6 +80,19 @@ extends Common\Prototype {
 	////////////////////////////////////////////////////////////////
 
 	public function
+	GetStatusWord():
+	string {
+
+		if(array_key_exists($this->Status, static::StatusWords))
+		return static::StatusWords[$this->Status];
+
+		return 'Unknown';
+	}
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
+	public function
 	Run():
 	static {
 
@@ -86,9 +123,11 @@ extends Common\Prototype {
 
 		// tell the server its running.
 
+		$this->Status = static::StatusLoading;
+
 		$this->Server->Running->Shove(
 			$this->ID,
-			[ 'Job'=> $this, 'Process'=> $Proc ]
+			new ServerProcess($this, $Proc)
 		);
 
 		$this->Server->FormatLn(
@@ -106,20 +145,22 @@ extends Common\Prototype {
 
 		$Data = trim($Data);
 
-		if(str_starts_with($Data, '{"TortStep":')) {
-			$this->OnProcessGenProgress(json_decode($Data));
+		if(str_starts_with($Data, '{"Step":')) {
+			$this->OnProcessGenProgress($Data);
 			return;
 		}
 
 		////////
 
-		$this->Server->FormatLn(
-			'%s %s',
-			$this->Server->CLI->FormatSecondary('Job Data:'),
-			$this->ID
-		);
+		if($this->Server->Debug) {
+			$this->Server->FormatLn(
+				'%s %s',
+				$this->Server->CLI->FormatSecondary('Job Data:'),
+				$this->ID
+			);
 
-		$this->Server->FormatLn(' ^ %s', $Data);
+			$this->Server->FormatLn(' ^ %s', $Data);
+		}
 
 		return;
 	}
@@ -128,7 +169,18 @@ extends Common\Prototype {
 	OnProcessGenProgress($Data):
 	void {
 
-		print_r($Data);
+		if($this->Status === static::StatusLoading) {
+			$this->Status = static::StatusRunning;
+			$this->Server->FormatLn(
+				'%s %s',
+				$this->Server->CLI->FormatSecondary('Generation Begin:'),
+				$this->ID
+			);
+		}
+
+		$this->StatusData = new TortJobStatus(json_decode($Data));
+
+		//$this->Server->PrintLn(json_encode($this->Status));
 
 		return;
 	}
@@ -145,6 +197,9 @@ extends Common\Prototype {
 			$this->ID
 		);
 
+		$this->Status = static::StatusDone;
+		$this->StatusData = NULL;
+
 		$this->Server->Kick();
 
 		return;
@@ -154,7 +209,7 @@ extends Common\Prototype {
 	////////////////////////////////////////////////////////////////
 
 	static public function
-	FromMessage(Server $Server, Message $Msg):
+	FromServerMessage(Server $Server, Message $Msg):
 	static {
 
 		return static::New(
@@ -163,6 +218,27 @@ extends Common\Prototype {
 			Type: $Msg->Type,
 			Payload: $Msg->Payload
 		);
+	}
+
+	static public function
+	FromJSON(string $Data):
+	static {
+
+		$Data = json_decode($Data, TRUE);
+
+		$Output = static::New(
+			ID: $Data['ID'],
+			Type: $Data['Type'],
+			Payload: $Data['Payload'] ?? [],
+			Status: $Data['Status'],
+			StatusData: (
+				$Data['StatusData']
+				? new TortJobStatus($Data['StatusData'])
+				: NULL
+			)
+		);
+
+		return $Output;
 	}
 
 }

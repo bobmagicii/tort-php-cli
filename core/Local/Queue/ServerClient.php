@@ -169,13 +169,13 @@ class ServerClient {
 
 		$Running = (
 			$this->Server->Running
-			->Map(fn(array $Entry)=> [ 'ID'=> $Entry['Job']->ID, 'Payload'=> $Entry['Job']->Payload ])
+			->Map(fn(ServerProcess $Item)=> json_encode($Item->Job))
 			->Values()
 		);
 
 		$Queued = (
 			$this->Server->Queue
-			->Map(fn(ServerJob $Job)=> [ 'ID'=> $Job->ID, 'Payload'=> $Job->Payload ])
+			->Map(fn(ServerJob $Job)=> json_encode($Job))
 			->Values()
 		);
 

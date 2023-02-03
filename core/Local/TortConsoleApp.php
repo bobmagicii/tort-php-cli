@@ -600,7 +600,7 @@ extends Console\Client {
 		return 0;
 	}
 
-	#[Console\Meta\Command('qstatus')]
+	#[Console\Meta\Command('qstatusold')]
 	#[Console\Meta\Info('Ask the queue server for status update.')]
 	#[Console\Meta\Toggle('--list', 'List the IDs of the jobs in the queue.')]
 	#[Console\Meta\Toggle('--full', 'List the full info of jobs in the queue.')]
@@ -673,6 +673,111 @@ extends Console\Client {
 			}
 
 			$this->FormatLn(' - %s', $Job->ID);
+		}
+
+		return 0;
+	}
+
+
+	#[Console\Meta\Command('qstatus')]
+	#[Console\Meta\Info('Ask the queue server for status update.')]
+	#[Console\Meta\Toggle('--list', 'List the IDs of the jobs in the queue.')]
+	#[Console\Meta\Toggle('--full', 'List the full info of jobs in the queue.')]
+	public function
+	QueueStatus2():
+	int {
+
+		$Job = NULL;
+
+		$Client = $this->GetQueueClient();
+		$ShowFull = $this->GetOption('full') ?? FALSE;
+		$ShowList = $this->GetOption('list') ?? $ShowFull;
+
+		////////
+
+		$Msg = $Client->Send('status');
+		$NumRunning = count($Msg->Payload['Running']);
+		$NumQueued = count($Msg->Payload['Queued']);
+
+		////////
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Status:'),
+			$NumRunning ? 'Running' : 'Idle'
+		);
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Running:'),
+			$NumRunning
+		);
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Queued:'),
+			$NumQueued
+		);
+
+		if(!$ShowList)
+		return 0;
+
+		if($NumRunning || $NumQueued)
+		$this->PrintLn();
+
+		foreach($Msg->Payload['Running'] as $Job) {
+			$Job = Queue\ServerJob::FromJSON($Job);
+
+			$this->FormatLn(
+				'%s%s%s',
+				$this->Formatter->BrightCyan("[{$Job->GetStatusWord()}] "),
+				$this->Formatter->BrightGreen(
+					$Job->StatusData instanceof TortJobStatus
+					? sprintf(
+						'[%d/%d %s it/s] ',
+						$Job->StatusData->Step,
+						$Job->StatusData->StepMax,
+						$Job->StatusData->IterPerSec
+					)
+					: ''
+				),
+				$Job->ID
+			);
+
+			if(!$ShowFull)
+			continue;
+
+			$this->FormatLn(
+				' - Payload: %s',
+				json_encode($Job->Payload)
+			);
+
+			$this->FormatLn(
+				' - Status: %s',
+				json_encode($Job->StatusData)
+			);
+
+			$this->PrintLn();
+		}
+
+		foreach($Msg->Payload['Queued'] as $Job) {
+			$Job = Queue\ServerJob::FromJSON($Job);
+
+			$this->FormatLn(
+				'%s %s',
+				$this->Formatter->DimCyan("[{$Job->GetStatusWord()}]"),
+				$Job->ID
+			);
+
+			if(!$ShowFull)
+			continue;
+
+			$this->FormatLn(
+				' - Payload: %s',
+				json_encode($Job->Payload)
+			);
+
+			$this->PrintLn();
 		}
 
 		return 0;
@@ -1222,16 +1327,17 @@ extends Console\Client {
 			// handle if we got something that smells like progress.
 			if(preg_match($PBarReg, $Data, $PBarData)) {
 				if($OutputJSON) {
-					$this->PrintLn(json_encode([
-						'TortStep'    => $TortStep,
-						'TortStepMax' => $TortStepMax,
+					$Status = new TortJobStatus([
+						'Step'        => $TortStep,
+						'StepMax'     => $TortStepMax,
 						'IterCur'     => $PBarData[1],
 						'IterMax'     => $PBarData[2],
 						'IterPerSec'  => $PBarData[5],
 						'TimeSpent'   => $PBarData[3],
 						'TimeETA'     => $PBarData[4]
-					]));
+					]);
 
+					$this->PrintLn(json_encode($Status));
 					continue;
 				}
 
