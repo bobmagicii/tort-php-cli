@@ -93,6 +93,16 @@ extends Common\Prototype {
 	////////////////////////////////////////////////////////////////
 
 	public function
+	Reset():
+	static {
+
+		$this->Status = static::StatusPending;
+		$this->StatusData = NULL;
+
+		return $this;
+	}
+
+	public function
 	Run():
 	static {
 
@@ -186,20 +196,23 @@ extends Common\Prototype {
 	}
 
 	public function
-	OnProcessExit():
+	OnProcessExit(int $Code, mixed $Signal):
 	void {
 
 		unset($this->Server->Running[$this->ID]);
 
-		$this->Server->FormatLn(
-			'%s %s',
-			$this->Server->CLI->FormatSecondary('Job Done:'),
-			$this->ID
-		);
+		if($Code !== 0) {
+			$Prefix = $this->Server->CLI->FormatSecondary('Job Terminated:');
+		}
+
+		else {
+			$Prefix = $this->Server->CLI->FormatSecondary('Job Done:');
+		}
 
 		$this->Status = static::StatusDone;
 		$this->StatusData = NULL;
 
+		$this->Server->FormatLn('%s %s', $Prefix, $this->ID);
 		$this->Server->Kick();
 
 		return;

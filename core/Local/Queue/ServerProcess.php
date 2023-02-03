@@ -24,4 +24,18 @@ class ServerProcess {
 		return;
 	}
 
+	public function
+	Quit():
+	void {
+
+		$Pipe = NULL;
+
+		foreach ($this->Process->pipes as $Pipe)
+		$Pipe->close();
+
+		$this->Process->Terminate();
+
+		return;
+	}
+
 }

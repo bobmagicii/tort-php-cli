@@ -12,7 +12,10 @@ class ServerClient {
 	MsgTypeMap = [
 		'cmd'    => 'OnMsgQueueCommand',
 		'status' => 'OnMsgQueryStatus',
-		'list'   => 'OnMsgQueryList'
+		'list'   => 'OnMsgQueryList',
+		'pause'  => 'OnMsgQueryPause',
+		'resume' => 'OnMsgQueryResume',
+		'quit'   => 'OnMsgQueryQuit'
 	];
 
 	////////////////////////////////////////////////////////////////
@@ -195,6 +198,97 @@ class ServerClient {
 			'Running' => $this->Server->Running->GetData(),
 			'Queue' => $this->Server->Queue->GetData()
 		]);
+
+		return;
+	}
+
+	protected function
+	OnMsgQueryPause(Message $Msg):
+	void {
+
+		$this->Server->RunState = Server::RunStatePauseAfter;
+		$this->Send('pause-after');
+
+		$this->Server->FormatLn(
+			'%s %s',
+			$this->Server->CLI->Formatter->BrightCyan('[NOTICE]'),
+			'Queue processing is paused.'
+		);
+
+		return;
+	}
+
+	protected function
+	OnMsgQueryResume(Message $Msg):
+	void {
+
+		$this->Server->RunState = Server::RunStateOn;
+		$this->Send('resume');
+
+		$this->Server->FormatLn(
+			'%s %s',
+			$this->Server->CLI->Formatter->BrightCyan('[NOTICE]'),
+			'Queue processing is resumed.'
+		);
+
+		$this->Server->Kick();
+
+		return;
+	}
+
+	protected function
+	OnMsgQueryQuit(Message $Msg):
+	void {
+
+		$this->Server->RunState = Server::RunStateQuitAfter;
+		$this->Send('quit-after');
+
+		if($Msg->Payload['force']) {
+			$this->Server->FormatLn(
+				'%s %s',
+				$this->Server->CLI->Formatter->BrightCyan('[NOTICE]'),
+				'Queue server shutting down...'
+			);
+
+			foreach($this->Server->Running as $Running) {
+				/** @var ServerProcess $Running */
+
+				// terminate the running jobs.
+
+				$this->Server->FormatLn(
+					'%s Terminating job %s',
+					$this->Server->CLI->Formatter->BrightCyan('[NOTICE]'),
+					$Running->Job->ID
+				);
+
+				$Running->Quit();
+
+				// push the running jobs back onto the queue before
+				// it writes to disk.
+
+				if(!$Msg->Payload['abandon']) {
+					$Running->Job->Reset();
+					$this->Server->Queue->Unshift($Running->Job);
+
+					$this->Server->FormatLn(
+						'%s %s',
+						$this->Server->CLI->FormatSecondary('Job Requeued:'),
+						$Running->Job->ID
+					);
+				}
+			}
+
+			$this->Server->Kick();
+			return;
+		}
+
+		$this->Server->FormatLn(
+			'%s %s',
+			$this->Server->CLI->Formatter->BrightCyan('[NOTICE]'),
+			'Queue server will terminate after jobs finish.'
+		);
+
+		$this->Server->Kick();
 
 		return;
 	}

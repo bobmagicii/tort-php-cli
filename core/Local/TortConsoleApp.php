@@ -593,9 +593,9 @@ extends Console\Client {
 
 		$Server = new Queue\Server($this, Loop: $Loop);
 		$Server->Run();
-
 		$Loop->Run();
-		$this->PrintLn('bye');
+
+		$Server->PrintLn('END OF LINE');
 
 		return 0;
 	}
@@ -711,18 +711,38 @@ extends Console\Client {
 
 	#[Console\Meta\Command('qpause')]
 	#[Console\Meta\Info('Tell the queue to pause on running any new jobs.')]
+	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
+	#[Console\Meta\Value('--port', 'Queue server port.')]
+	#[Console\Meta\Error(1, 'unable to connect to queue server')]
 	public function
 	QueuePause():
 	int {
+
+		$Client = $this->GetQueueClient();
+
+		if(!$Client)
+		$this->Quit(1);
+
+		$Client->Send('pause');
 
 		return 0;
 	}
 
 	#[Console\Meta\Command('qresume')]
 	#[Console\Meta\Info('Tell the queue to resume running jobs.')]
+	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
+	#[Console\Meta\Value('--port', 'Queue server port.')]
+	#[Console\Meta\Error(1, 'unable to connect to queue server')]
 	public function
 	QueueResume():
 	int {
+
+		$Client = $this->GetQueueClient();
+
+		if(!$Client)
+		$this->Quit(1);
+
+		$Client->Send('resume');
 
 		return 0;
 	}
@@ -730,9 +750,22 @@ extends Console\Client {
 	#[Console\Meta\Command('qquit')]
 	#[Console\Meta\Info('Tell the queue to terminate itself.')]
 	#[Console\Meta\Toggle('--now', 'Do not wait for the current job to finish. Do it now.')]
+	#[Console\Meta\Toggle('--abandon', 'Do not push any interuptted jobs back into the queue.')]
 	public function
 	QueueQuit():
 	int {
+
+		$Client = $this->GetQueueClient();
+		$Force = $this->GetOption('now') ?? FALSE;
+		$Abandon = $this->GetOption('abandon') ?? FALSE;
+
+		if(!$Client)
+		$this->Quit(1);
+
+		$Client->Send('quit', [
+			'force'   => $Force,
+			'abandon' => $Abandon
+		]);
 
 		return 0;
 	}

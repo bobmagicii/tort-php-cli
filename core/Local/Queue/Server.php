@@ -14,6 +14,14 @@ use Nether\Console\Client;
 
 class Server {
 
+	const
+	RunStateOn         = 1,
+	RunStatePauseAfter = 2,
+	RunStateQuitAfter  = 3;
+
+	public int
+	$RunState = 1;
+
 	public Client
 	$CLI;
 
@@ -100,6 +108,17 @@ class Server {
 	Kick():
 	static {
 
+		if($this->RunState === static::RunStatePauseAfter) {
+			return $this;
+		}
+
+		if($this->RunState === static::RunStateQuitAfter) {
+			if($this->Running->Count() === 0)
+			$this->Server->Close();
+
+			return $this;
+		}
+
 		if($this->Running->Count() < $this->MaxRunning)
 		if($this->Queue->Count() > 0)
 		$this->Next();
@@ -139,6 +158,15 @@ class Server {
 		$this->Kick();
 
 		return $Job;
+	}
+
+	public function
+	Quit():
+	static {
+
+		$this->Server->Close();
+
+		return $this;
 	}
 
 	////////////////////////////////////////////////////////////////
