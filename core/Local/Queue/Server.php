@@ -2,7 +2,7 @@
 
 namespace Local\Queue;
 
-use React;
+use Nether\Console;
 
 use Throwable;
 use React\EventLoop\Loop;
@@ -10,7 +10,6 @@ use React\EventLoop\LoopInterface;
 use React\Socket\SocketServer;
 use React\Socket\ConnectionInterface;
 use Nether\Common\Datastore;
-use Nether\Console\Client;
 
 class Server {
 
@@ -22,7 +21,7 @@ class Server {
 	public int
 	$RunState = 1;
 
-	public Client
+	public Console\Client
 	$CLI;
 
 	public Datastore
@@ -59,7 +58,7 @@ class Server {
 	////////////////////////////////////////////////////////////////
 
 	public function
-	__Construct(Client $CLI, string $Host='127.0.0.1', int $Port=42001, ?LoopInterface $Loop=NULL) {
+	__Construct(Console\Client $CLI, string $Host='127.0.0.1', int $Port=42001, ?LoopInterface $Loop=NULL) {
 
 		$this->Host = $Host;
 		$this->Port = $Port;
