@@ -600,98 +600,24 @@ extends Console\Client {
 		return 0;
 	}
 
-	#[Console\Meta\Command('qstatusold')]
+	#[Console\Meta\Command('qstatus')]
 	#[Console\Meta\Info('Ask the queue server for status update.')]
 	#[Console\Meta\Toggle('--list', 'List the IDs of the jobs in the queue.')]
 	#[Console\Meta\Toggle('--full', 'List the full info of jobs in the queue.')]
+	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
+	#[Console\Meta\Value('--port', 'Queue server port.')]
+	#[Console\Meta\Error(1, 'unable to connect to queue server')]
 	public function
 	QueueStatus():
 	int {
 
 		$Job = NULL;
-
-		$Client = $this->GetQueueClient();
-		$ShowList = $this->GetOption('list') ?? FALSE;
-		$ShowFull = $this->GetOption('full') ?? FALSE;
-
-		if($ShowFull)
-		$ShowList = TRUE;
-
-		////////
-
-		$Msg = $Client->Send('status');
-		$NumRunning = count($Msg->Payload['Running']);
-		$NumQueued = count($Msg->Payload['Queued']);
-
-		////////
-
-		$this->FormatLn(
-			'%s %s',
-			$this->FormatPrimary('Status:'),
-			$NumRunning ? 'Running' : 'Idle'
-		);
-
-		////////
-
-		$this->FormatLn(
-			'%s %s',
-			$this->FormatPrimary('Running:'),
-			$NumRunning
-		);
-
-		if($ShowList)
-		foreach($Msg->Payload['Running'] as $Job) {
-			$Job = new Queue\ServerJob($Job);
-
-			if($ShowFull) {
-				$this->FormatLn(' - %s', $this->FormatSecondary($Job->ID));
-				$this->FormatLn('   %s', json_encode($Job->Payload));
-				$this->PrintLn();
-				continue;
-			}
-
-			$this->FormatLn(' - %s', $Job->ID);
-		}
-
-		////////
-
-		$this->FormatLn(
-			'%s %s',
-			$this->FormatPrimary('Queued:'),
-			$NumQueued
-		);
-
-		if($ShowList)
-		foreach($Msg->Payload['Queued'] as $Job) {
-			$Job = new Queue\ServerJob($Job);
-
-			if($ShowFull) {
-				$this->FormatLn(' - %s', $this->FormatSecondary($Job->ID));
-				$this->FormatLn('   %s', json_encode($Job->Payload));
-				$this->PrintLn();
-				continue;
-			}
-
-			$this->FormatLn(' - %s', $Job->ID);
-		}
-
-		return 0;
-	}
-
-
-	#[Console\Meta\Command('qstatus')]
-	#[Console\Meta\Info('Ask the queue server for status update.')]
-	#[Console\Meta\Toggle('--list', 'List the IDs of the jobs in the queue.')]
-	#[Console\Meta\Toggle('--full', 'List the full info of jobs in the queue.')]
-	public function
-	QueueStatus2():
-	int {
-
-		$Job = NULL;
-
 		$Client = $this->GetQueueClient();
 		$ShowFull = $this->GetOption('full') ?? FALSE;
 		$ShowList = $this->GetOption('list') ?? $ShowFull;
+
+		if(!$Client)
+		$this->Quit(1);
 
 		////////
 
@@ -823,14 +749,21 @@ extends Console\Client {
 
 	#[Console\Meta\Command('qgen')]
 	#[Console\Meta\Info('Add a generation command to the queue.')]
+	#[Console\Meta\Error(1, 'unable to connect to queue server')]
+	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
+	#[Console\Meta\Value('--port', 'Queue server port.')]
 	public function
 	QueueGenerate():
 	int {
 
+		$Client = $this->GetQueueClient();
+
 		$Cmd = new Common\Datastore([ 'gen', '--derp', '--jsonout' ]);
 		$Cmd->MergeRight(array_slice($_SERVER['argv'], 2));
 
-		$Client = $this->GetQueueClient();
+		if(!$Client)
+		$this->Quit(1);
+
 		$Client->Send('cmd', [
 			'Args' => $Cmd->GetData()
 		]);
@@ -902,11 +835,18 @@ extends Console\Client {
 
 	#[Console\Meta\Command('qcmd', TRUE)]
 	#[Console\Meta\Info('Send any Tort command to the queue.')]
+	#[Console\Meta\Error(1, 'unable to connect to queue server')]
+	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
+	#[Console\Meta\Value('--port', 'Queue server port.')]
 	public function
 	QueueCommand():
 	int {
 
 		$Client = $this->GetQueueClient();
+
+		if(!$Client)
+		$this->Quit(1);
+
 		$Msg = $Client->Send('cmd', [
 			'Args' => array_slice($_SERVER['argv'], 2)
 		]);
@@ -1505,7 +1445,7 @@ extends Console\Client {
 
 	protected function
 	GetQueueClient():
-	Queue\Client {
+	?Queue\Client {
 
 		$Host = $this->GetOption('host') ?? '127.0.0.1';
 		$Port = $this->GetOption('port') ?? 42001;
@@ -1514,8 +1454,7 @@ extends Console\Client {
 
 		try { $Client->Connect(); }
 		catch(Queue\Error\ClientConnectFail $Err) {
-			$this->PrintLn($Err->GetMessage());
-			return 1;
+			return NULL;
 		}
 
 		return $Client;
