@@ -513,6 +513,7 @@ extends Console\Client {
 	#[Console\Meta\Toggle('--sort', 'Sort the summary by how many files for each line there are.')]
 	#[Console\Meta\Toggle('--copy', 'Copy files into sequenced set directories.')]
 	#[Console\Meta\Toggle('--move', 'Move files into sequenced set sirectories.')]
+	#[Console\Meta\Toggle('--shuffle', 'Shuffles the lines before distributing them into sequenced folders.')]
 	#[Console\Meta\Error(1, 'no --dir specified')]
 	#[Console\Meta\Error(2, 'directory not found %s')]
 	public function
@@ -526,6 +527,7 @@ extends Console\Client {
 		$Copy = $this->GetOption('copy') ?? FALSE;
 		$Move = $this->GetOption('move') ?? FALSE;
 		$Sort = $this->GetOption('sort') ?? FALSE;
+		$Shuffle = $this->GetOption('shuffle') ?? FALSE;
 		$Check = (!$Copy && !$Move);
 
 		if(!$Path)
@@ -546,7 +548,12 @@ extends Console\Client {
 			$Path
 		);
 
-		$Tool = new TortDirectorySequencer($Path, ($Copy && !$Move));
+		$Tool = new TortDirectorySequencer(
+			$Path,
+			($Copy && !$Move),
+			$Shuffle
+		);
+
 		$Files = $Tool->GetFiles();
 		$Max = $Tool->CheckMaxSets($Files);
 		$Counts = $Files->Map(fn($Line)=> $Line->Count());

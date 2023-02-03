@@ -15,11 +15,15 @@ class TortDirectorySequencer {
 	protected bool
 	$Copy;
 
+	protected bool
+	$Shuffle;
+
 	public function
-	__Construct(string $Path, bool $Copy) {
+	__Construct(string $Path, bool $Copy, bool $Shuffle=FALSE) {
 
 		$this->Path = $Path;
 		$this->Copy = $Copy;
+		$this->Shuffle = $Shuffle;
 
 		return;
 	}
@@ -90,6 +94,8 @@ class TortDirectorySequencer {
 		// from each complete set of lines for them.
 
 		for($Iter = 0; $Iter < $MaxSets; $Iter++) {
+			$Line = NULL;
+
 			$Dir = Common\Filesystem\Util::Pathify(
 				$this->Path,
 				'seqs',
@@ -97,6 +103,10 @@ class TortDirectorySequencer {
 			);
 
 			$Seqs->Shove($Dir, new Common\Datastore);
+
+			if($this->Shuffle)
+			foreach($Files as $Line)
+			$Line->Shuffle();
 
 			foreach($Files as $Line)
 			$Seqs[$Dir]->Push($Line[$Iter]);
@@ -107,11 +117,10 @@ class TortDirectorySequencer {
 
 		$Seqs->Each(function(Common\Datastore $Files, string $SeqDir) {
 
+			$File = NULL;
+
 			if(!is_dir($SeqDir))
 			mkdir($SeqDir, 0777, TRUE);
-
-			$Files->Shuffle();
-			$File = NULL;
 
 			foreach($Files as $File) {
 				$Src = Common\Filesystem\Util::Pathify($this->Path, $File);
