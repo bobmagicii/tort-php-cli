@@ -6,10 +6,12 @@ use React;
 use Nether\Common;
 
 use Exception;
+use JsonSerializable;
 use Local\TortJobStatus;
 
 class ServerJob
-extends Common\Prototype {
+extends Common\Prototype
+implements JsonSerializable {
 
 	const
 	StatusPending = 0,
@@ -49,11 +51,42 @@ extends Common\Prototype {
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
-	protected Server
+	public Server
 	$Server;
 
-	protected React\ChildProcess\Process
+	public React\ChildProcess\Process
 	$Process;
+
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+
+	public function
+	__Sleep():
+	array {
+
+		return [
+			'ID',
+			'Type',
+			'Payload',
+			'Status',
+			'StatusData',
+			'TimeStart'
+		];
+	}
+
+	public function
+	JsonSerialize():
+	array {
+
+		return [
+			'ID'         => $this->ID,
+			'Type'       => $this->Type,
+			'Payload'    => $this->Payload,
+			'Status'     => $this->Status,
+			'StatusData' => $this->StatusData,
+			'TimeStart'  => $this->TimeStart
+		];
+	}
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////

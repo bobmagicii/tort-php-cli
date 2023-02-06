@@ -7,6 +7,8 @@
 /vendor
 /voices
 
+queue.phson
+
 # local things that just help me specifically thta don't need to be in
 # source control either.
 

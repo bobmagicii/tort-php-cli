@@ -2,14 +2,11 @@
 
 namespace Local\Queue;
 
+use React;
 use Nether\Console;
+use Nether\Common;
 
 use Throwable;
-use React\EventLoop\Loop;
-use React\EventLoop\LoopInterface;
-use React\Socket\SocketServer;
-use React\Socket\ConnectionInterface;
-use Nether\Common\Datastore;
 
 class Server {
 
@@ -24,16 +21,16 @@ class Server {
 	public Console\Client
 	$CLI;
 
-	public Datastore
+	public Common\Datastore
 	$Queue;
 
-	public Datastore
+	public Common\Datastore
 	$Running;
 
 	public int
 	$MaxRunning = 1;
 
-	public ?LoopInterface
+	public ?React\EventLoop\LoopInterface
 	$Loop;
 
 	public bool
@@ -48,26 +45,39 @@ class Server {
 	protected int
 	$Port;
 
-	protected SocketServer
+	protected React\Socket\SocketServer
 	$Server;
 
-	protected Datastore
+	protected Common\Datastore
 	$Clients;
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
 	public function
-	__Construct(Console\Client $CLI, string $Host='127.0.0.1', int $Port=42001, ?LoopInterface $Loop=NULL) {
+	__Construct(
+		Console\Client $CLI,
+		string $Host='127.0.0.1',
+		int $Port=42001,
+		string $File='queue.phson',
+		?React\EventLoop\LoopInterface $Loop=NULL
+	) {
 
 		$this->Host = $Host;
 		$this->Port = $Port;
 		$this->CLI = $CLI;
-		$this->Loop = $Loop ?? Loop::Get();
+		$this->Loop = $Loop ?? React\EventLoop\Loop::Get();
 
-		$this->Clients = new Datastore;
-		$this->Queue = new Datastore;
-		$this->Running = new Datastore;
+		$this->Clients = new Common\Datastore;
+		$this->Queue = new Common\Datastore;
+		$this->Running = new Common\Datastore;
+
+		////////
+
+		if(!str_ends_with($File, '.phson'))
+		$File = "{$File}.phson";
+
+		$this->Queue->SetFilename($File);
 
 		return;
 	}
@@ -76,18 +86,38 @@ class Server {
 	////////////////////////////////////////////////////////////////
 
 	public function
-	Start():
+	Start(bool $Fresh=FALSE):
 	void {
 
 		$URI = sprintf('%s:%d', $this->Host, $this->Port);
 
 		////////
 
-		$this->Server = new SocketServer($URI, loop: $this->Loop);
+		$this->Server = new React\Socket\SocketServer($URI, loop: $this->Loop);
 
 		($this->Server)
 		->On('connection', $this->OnConnect(...))
 		->On('error', $this->OnError(...));
+
+		////////
+
+		if(!file_exists($this->Queue->GetFilename()) || $Fresh)
+		$this->Queue->Write();
+
+		$this->Queue->Read();
+		$this->Queue->Each(
+			fn(ServerJob $Job)
+			=> $Job->Server = $this
+		);
+
+		$this->FormatLn(
+			'%s %s (%d jobs(s))',
+			$this->CLI->FormatSecondary('Loaded Queue File:'),
+			$this->Queue->GetFilename(),
+			$this->Queue->Count()
+		);
+
+		$this->Loop->AddTimer(0.25, $this->OnTimerKick(...));
 
 		////////
 
@@ -98,6 +128,16 @@ class Server {
 		);
 
 		return;
+	}
+
+	public function
+	Stop():
+	static {
+
+		$this->Server->Close();
+		$this->Queue->Write();
+
+		return $this;
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -113,7 +153,7 @@ class Server {
 
 		if($this->RunState === static::RunStateQuitAfter) {
 			if($this->Running->Count() === 0)
-			$this->Server->Close();
+			$this->Stop();
 
 			return $this;
 		}
@@ -130,6 +170,7 @@ class Server {
 	static {
 
 		$Job = $this->Queue->Shift();
+		$this->Queue->Write();
 
 		switch($Job->Type) {
 			case 'cmd':
@@ -147,6 +188,7 @@ class Server {
 		$Job = ServerJob::FromServerMessage($this, $Msg);
 
 		$this->Queue->Push($Job);
+		$this->Queue->Write();
 
 		$this->FormatLn(
 			'%s %s',
@@ -159,20 +201,11 @@ class Server {
 		return $Job;
 	}
 
-	public function
-	Quit():
-	static {
-
-		$this->Server->Close();
-
-		return $this;
-	}
-
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
 	public function
-	OnConnect(ConnectionInterface $Connect):
+	OnConnect(React\Socket\ConnectionInterface $Connect):
 	void {
 
 		$RemoteAddr = $Connect->GetRemoteAddress();
@@ -187,7 +220,7 @@ class Server {
 	}
 
 	public function
-	OnDisconnect(ConnectionInterface $Connect):
+	OnDisconnect(React\Socket\ConnectionInterface $Connect):
 	void {
 
 		$RemoteAddr = $Connect->GetRemoteAddress();
@@ -207,6 +240,15 @@ class Server {
 			'error: %s',
 			$Error->GetMessage()
 		);
+
+		return;
+	}
+
+	public function
+	OnTimerKick(React\EventLoop\TimerInterface $Timer):
+	void {
+
+		$this->Kick();
 
 		return;
 	}

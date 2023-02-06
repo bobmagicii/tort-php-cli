@@ -586,16 +586,33 @@ extends Console\Client {
 	#[Console\Meta\Command('qs')]
 	#[Console\Meta\Info('Run the queue server allowing for setting up many jobs to run in sequence. This is not needed to use this tool to run things via command or script. It is needed for the Web UI.')]
 	#[Console\Meta\Value('--bind', 'Interface to bind to. Defaults to 127.0.0.1. Set to 0.0.0.0 for any.')]
+	#[Console\Meta\Value('--fresh', 'Ignore what was in the queue file starting fresh.')]
 	public function
 	QueueServer():
 	int {
 
 		$Host = $this->GetOption('bind') ?? '127.0.0.1';
-		$Loop = React\EventLoop\Loop::Get();
-		$Server = new Queue\Server($this, Host: $Host, Loop: $Loop);
+		$File = $this->GetLocalPath($this->GetOption('file') ?? 'queue.phson');
+		$Fresh = $this->GetOption('fresh') ?? FALSE;
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
 
-		$Server->Start();
+		$this->HandleCheckingForConda($Config);
+
+		////////
+
+		$Loop = React\EventLoop\Loop::Get();
+
+		$Server = new Queue\Server(
+			$this,
+			Host: $Host,
+			File: $File,
+			Loop: $Loop
+		);
+
+		$Server->Start($Fresh);
 		$Loop->Run();
+
+		////////
 
 		$Server->PrintLn('END OF LINE');
 
