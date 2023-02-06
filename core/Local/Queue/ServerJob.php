@@ -43,6 +43,9 @@ extends Common\Prototype {
 	public ?TortJobStatus
 	$StatusData = NULL;
 
+	public int
+	$TimeStart = 0;
+
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
@@ -89,6 +92,18 @@ extends Common\Prototype {
 		return 'Unknown';
 	}
 
+	public function
+	GetTimeSince():
+	string {
+
+		if($this->TimeStart === 0)
+		return 'not started';
+
+		$Time = new Common\Units\Timeframe($this->TimeStart);
+
+		return $Time->Get();
+	}
+
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
@@ -98,6 +113,7 @@ extends Common\Prototype {
 
 		$this->Status = static::StatusPending;
 		$this->StatusData = NULL;
+		$this->TimeStart = 0;
 
 		return $this;
 	}
@@ -134,6 +150,7 @@ extends Common\Prototype {
 		// tell the server its running.
 
 		$this->Status = static::StatusLoading;
+		$this->TimeStart = time();
 
 		$this->Server->Running->Shove(
 			$this->ID,
@@ -212,7 +229,13 @@ extends Common\Prototype {
 		$this->Status = static::StatusDone;
 		$this->StatusData = NULL;
 
-		$this->Server->FormatLn('%s %s', $Prefix, $this->ID);
+		$this->Server->FormatLn(
+			'%s %s (%s)',
+			$Prefix,
+			$this->ID,
+			$this->GetTimeSince()
+		);
+
 		$this->Server->Kick();
 
 		return;

@@ -167,16 +167,16 @@
         },
         {
             "name": "netherphp/common",
-            "version": "v5.0.6",
+            "version": "v5.0.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/netherphp/common.git",
-                "reference": "aace8471669d9672a78ed4e7257f0821e0eb51ef"
+                "reference": "a2437a30e8849894fc5bbff0e46e75884eed4ba7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/netherphp/common/zipball/aace8471669d9672a78ed4e7257f0821e0eb51ef",
-                "reference": "aace8471669d9672a78ed4e7257f0821e0eb51ef",
+                "url": "https://api.github.com/repos/netherphp/common/zipball/a2437a30e8849894fc5bbff0e46e75884eed4ba7",
+                "reference": "a2437a30e8849894fc5bbff0e46e75884eed4ba7",
                 "shasum": ""
             },
             "require": {
@@ -213,9 +213,9 @@
             ],
             "support": {
                 "issues": "https://github.com/netherphp/common/issues",
-                "source": "https://github.com/netherphp/common/tree/v5.0.6"
+                "source": "https://github.com/netherphp/common/tree/v5.0.11"
             },
-            "time": "2023-01-29T06:00:52+00:00"
+            "time": "2023-02-06T01:28:31+00:00"
         },
         {
             "name": "netherphp/console",
@@ -223,12 +223,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/netherphp/console.git",
-                "reference": "ec5ec53417ce514ccf842f96d38233d8f50bd591"
+                "reference": "40eaf668567e8c7154da6b9c74deda1cba28221b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/netherphp/console/zipball/ec5ec53417ce514ccf842f96d38233d8f50bd591",
-                "reference": "ec5ec53417ce514ccf842f96d38233d8f50bd591",
+                "url": "https://api.github.com/repos/netherphp/console/zipball/40eaf668567e8c7154da6b9c74deda1cba28221b",
+                "reference": "40eaf668567e8c7154da6b9c74deda1cba28221b",
                 "shasum": ""
             },
             "require": {
@@ -273,7 +273,7 @@
                 "issues": "https://github.com/netherphp/console/issues",
                 "source": "https://github.com/netherphp/console/tree/redux"
             },
-            "time": "2023-01-26T05:43:26+00:00"
+            "time": "2023-02-04T23:32:28+00:00"
         },
         {
             "name": "psr/http-message",
@@ -1717,5 +1717,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.3.0"
 }
