@@ -580,6 +580,130 @@ extends Console\Client {
 		return 0;
 	}
 
+	#[Console\Meta\Command('auditdir')]
+	#[Console\Meta\Info('Play all the sound files in a directory asking if you want to keep them. Requires the PlayerCmd to be set to a player capable of CLI playing in your tort.json.')]
+	#[Console\Meta\Error(1, 'no PlayerCmd found in tort.json')]
+	#[Console\Meta\Error(2, 'supplied path not valid.')]
+	public function
+	CmdAudit():
+	int {
+
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Path = $this->GetInput(1);
+
+		$Audit = NULL;
+		$Files = NULL;
+		$Remnants = NULL;
+		$Input = NULL;
+		$File = NULL;
+		$Iter = NULL;
+
+		////////
+
+		if(!$Config->App->PlayerCmd)
+		$this->Quit(1);
+
+		if(!$Path)
+		$this->Quit(2);
+
+		$Path = $this->GetLocalPath($Path);
+
+		if(!is_dir($Path))
+		$this->Quit(2);
+
+		////////
+
+		$Audit = new TortAudioAuditor($Config, $Path);
+		$Files = $Audit->GetFiles();
+
+		$this->FormatLn(
+			'%s %s',
+			$this->FormatPrimary('Directory:'),
+			$Path
+		);
+
+		$this->FormatLn(
+			'%s %d',
+			$this->FormatPrimary('Found Files:'),
+			$Files->Count()
+		);
+
+		$this->PrintLn();
+
+		////////
+
+		$Input = $this->Ask('Begin Auditing?', '[y/n]', FALSE);
+
+		if($Input !== 'y')
+		return 0;
+
+		////////
+
+		$Iter = 0;
+
+		while($Iter < $Files->Count()) {
+			$Input = NULL;
+			$File = $Files[$Iter];
+
+			$this->FormatLn(
+				'%s %s',
+				$this->FormatPrimary('Playing:'),
+				$File
+			);
+
+			$Audit->Play($File);
+
+			while(!in_array($Input, ['y', 'n', 'r', 'q'])) {
+				$Input = $this->Ask('Keep?', '[y/n/r/q/?]', FALSE);
+
+				if($Input === '?') {
+					$this->FormatLn('y = yes, keep this file.');
+					$this->FormatLn('n = no, do not keep this file.');
+					$this->FormatLn('r = repeat this file.');
+					$this->FormatLn('q = quit auditing.');
+					$this->PrintLn();
+				}
+			}
+
+			// user wants to repeat file.
+
+			if($Input === 'r')
+			continue;
+
+			// user wants to bail.
+
+			if($Input === 'q')
+			$Iter = $Files->Count();
+
+			// user wants to delete file.
+
+			if($Input === 'n') {
+				$this->FormatLn(
+					'%s %s',
+					$this->Formatter->DimMagenta('Delete:'),
+					$File
+				);
+
+				$Audit->Delete($File);
+				$this->PrintLn();
+			}
+
+			$Iter++;
+		}
+
+		$Remnants = $Audit->GetFiles();
+
+		$this->FormatLn(
+			'%s %d',
+			$this->FormatPrimary('Remaining Files:'),
+			$Remnants->Count()
+		);
+
+		////////
+
+		return 0;
+	}
+
 	////////////////////////////////////////////////////////////////
 	// queue management commands ///////////////////////////////////
 
@@ -923,6 +1047,35 @@ extends Console\Client {
 
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
+
+	public function
+	Ask(string $Msg, string $Choices=NULL, ?bool $Case=FALSE):
+	string {
+
+		$Prompt = $this->Formatter->BrightMagenta($Msg);
+
+		if($Choices)
+		$Prompt .= " {$Choices}";
+
+		////////
+
+		$Input = $this->Prompt($Prompt, '>');
+
+		$Input = match(TRUE) {
+			$Case === TRUE
+			=> strtoupper($Input),
+
+			$Case === FALSE
+			=> strtolower($Input),
+
+			default
+			=> $Input
+		};
+
+		////////
+
+		return $Input;
+	}
 
 	protected function
 	GetLocalPath(...$Argv):

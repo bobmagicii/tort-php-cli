@@ -1,5 +1,6 @@
 {
 	"CheckForConda": false,
 	"DefaultVoice": "train_atkins",
-	"OutputDatestamp": "Ymd-His-v"
+	"OutputDatestamp": "Ymd-His-v",
+	"PlayerCmd": "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" --intf dummy --no-loop {file} vlc://quit"
 }
