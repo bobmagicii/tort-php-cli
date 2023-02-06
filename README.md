@@ -104,7 +104,7 @@ first line.
 
 
 
-# Usage
+# Generating Text-To-Speech
 
 This will dump its help command.
 
@@ -199,6 +199,90 @@ those setting will get used with that voice.
 ```sh
 php tort.phar voiceconf <voice>
 ```
+
+
+
+# Running the Queue Server
+
+Tort includes a queue service that can be used to queue up many jobs and have
+them all processed in series. Jobs can be thrown at it from any angle and it
+will just grind them out in the order it got them.
+
+Additionally, it will write the queue to disk so it can resume where it left
+off if something happens, or you need to stop it so you can have system
+resources back.
+
+---
+
+Run the queue server. Default is it only listens on localhost.
+
+```sh
+php tort.phar qs
+```
+
+To accept network connections you can bind it to an IP or `0.0.0.0` for to
+listen to any interface. You are responsible for any firewalling or port
+forwarding needed.
+
+```sh
+php tort.phar qs --bind=0.0.0.0
+```
+
+
+
+# Queue Client Commands
+
+All of the following commands accept `--host` and `--port` options to talk to
+a queue server running on another machine on the other side of the network.
+
+---
+
+Asking the queue server to perform a new Text-to-Speech just change the `gen`
+command you would normally use into `qgen` and pass everything else just as you
+normally would to it.
+
+```sh
+php tort.phar qgen "this is a test." --seed=69
+```
+
+---
+
+The queue server can then be asked for its status. By default it will just show
+a summary and a list of what job IDs are currently running. You can have it
+show the entire queue with `--list` and see the full job info including the
+commands it is going to run with `--full`.
+
+```sh
+php tort.phar qstatus
+```
+
+---
+
+The queue server can be asked to terminate itself. By default it will wait until
+the currently running jobs finish and then it will quit. It can be asked to
+terminate itself immediately by adding the `--now` option, which will then add
+any jobs being interupted back onto the queue stack to start over the next time
+the server is run. Interupted jobs can be thrown away instead by adding the
+`--abandon` option.
+
+```sh
+php tort.phar qquit
+```
+
+---
+
+The queue server can be asked to pause itself after the currently running task
+finishes, therefore sitting idle instead of running any more jobs. It can be
+asked to resume itself as well.
+
+```sh
+php tort.phar qpause
+```
+
+```sh
+php tort.phar qresume
+```
+
 
 
 # Final Notes
