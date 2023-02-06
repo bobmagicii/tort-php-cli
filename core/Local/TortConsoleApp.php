@@ -585,14 +585,16 @@ extends Console\Client {
 
 	#[Console\Meta\Command('qs')]
 	#[Console\Meta\Info('Run the queue server allowing for setting up many jobs to run in sequence. This is not needed to use this tool to run things via command or script. It is needed for the Web UI.')]
+	#[Console\Meta\Value('--bind', 'Interface to bind to. Defaults to 127.0.0.1. Set to 0.0.0.0 for any.')]
 	public function
 	QueueServer():
 	int {
 
+		$Host = $this->GetOption('bind') ?? '127.0.0.1';
 		$Loop = React\EventLoop\Loop::Get();
+		$Server = new Queue\Server($this, Host: $Host, Loop: $Loop);
 
-		$Server = new Queue\Server($this, Loop: $Loop);
-		$Server->Run();
+		$Server->Start();
 		$Loop->Run();
 
 		$Server->PrintLn('END OF LINE');
@@ -645,9 +647,6 @@ extends Console\Client {
 			$NumQueued
 		);
 
-		if(!$ShowList)
-		return 0;
-
 		if($NumRunning || $NumQueued)
 		$this->PrintLn();
 
@@ -685,6 +684,11 @@ extends Console\Client {
 
 			$this->PrintLn();
 		}
+
+		$this->PrintLn();
+
+		if(!$ShowList)
+		return 0;
 
 		foreach($Msg->Payload['Queued'] as $Job) {
 			$Job = Queue\ServerJob::FromJSON($Job);
@@ -1430,6 +1434,9 @@ extends Console\Client {
 				continue;
 
 				if(str_contains($ItemPath, "{$DS}vendor{$DS}bin{$DS}"))
+				continue;
+
+				if(str_contains($ItemPath, 'php_codesniffer'))
 				continue;
 
 				if(str_contains($ItemPath, '.git'))

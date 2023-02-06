@@ -76,7 +76,7 @@ class Server {
 	////////////////////////////////////////////////////////////////
 
 	public function
-	Run():
+	Start():
 	void {
 
 		$URI = sprintf('%s:%d', $this->Host, $this->Port);
