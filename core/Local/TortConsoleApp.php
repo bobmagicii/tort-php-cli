@@ -722,10 +722,11 @@ extends Console\Client {
 	QueueServer():
 	int {
 
-		$Host = $this->GetOption('bind') ?? '127.0.0.1';
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('bind') ?? $Config->App->DefaultBind;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
 		$File = $this->GetLocalPath($this->GetOption('file') ?? 'queue.phson');
 		$Fresh = $this->GetOption('fresh') ?? FALSE;
-		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
 
 		try {
 			$this->HandleCheckingForConda($Config);
@@ -742,6 +743,7 @@ extends Console\Client {
 		$Server = new Queue\Server(
 			$this,
 			Host: $Host,
+			Port: $Port,
 			File: $File,
 			Loop: $Loop
 		);
@@ -767,8 +769,12 @@ extends Console\Client {
 	QueueStatus():
 	int {
 
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
+
 		$Job = NULL;
-		$Client = $this->GetQueueClient();
+		$Client = $this->GetQueueClient($Host, $Port);
 		$ShowFull = $this->GetOption('full') ?? FALSE;
 		$ShowList = $this->GetOption('list') ?? $ShowFull;
 
@@ -876,7 +882,11 @@ extends Console\Client {
 	QueuePause():
 	int {
 
-		$Client = $this->GetQueueClient();
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
+
+		$Client = $this->GetQueueClient($Host, $Port);
 
 		if(!$Client)
 		$this->Quit(1);
@@ -895,7 +905,11 @@ extends Console\Client {
 	QueueResume():
 	int {
 
-		$Client = $this->GetQueueClient();
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
+
+		$Client = $this->GetQueueClient($Host, $Port);
 
 		if(!$Client)
 		$this->Quit(1);
@@ -913,9 +927,13 @@ extends Console\Client {
 	QueueQuit():
 	int {
 
-		$Client = $this->GetQueueClient();
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
 		$Force = $this->GetOption('now') ?? FALSE;
 		$Abandon = $this->GetOption('abandon') ?? FALSE;
+
+		$Client = $this->GetQueueClient($Host, $Port);
 
 		if(!$Client)
 		$this->Quit(1);
@@ -935,6 +953,12 @@ extends Console\Client {
 	QueryRemove():
 	int {
 
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
+
+		$Client = $this->GetQueueClient($Host, $Port);
+
 		return 0;
 	}
 
@@ -947,7 +971,11 @@ extends Console\Client {
 	QueueGenerate():
 	int {
 
-		$Client = $this->GetQueueClient();
+		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
+		$Host = $this->GetOption('host') ?? $Config->App->DefaultHost;
+		$Port = $this->GetOption('port') ?? $Config->App->DefaultPort;
+
+		$Client = $this->GetQueueClient($Host, $Port);
 
 		$Cmd = new Common\Datastore([ 'gen', '--derp', '--jsonout' ]);
 		$Cmd->MergeRight(array_slice($_SERVER['argv'], 2));
@@ -1020,29 +1048,6 @@ extends Console\Client {
 			Common\Filesystem\Util::Pathify($BaseDir, 'LICENSE.md'),
 			Common\Filesystem\Util::Pathify($BaseDir, 'build', 'tort', 'LICENSE.md')
 		);
-
-		return 0;
-	}
-
-	#[Console\Meta\Command('qcmd', TRUE)]
-	#[Console\Meta\Info('Send any Tort command to the queue.')]
-	#[Console\Meta\Error(1, 'unable to connect to queue server')]
-	#[Console\Meta\Value('--host', 'Queue server host name or IP.')]
-	#[Console\Meta\Value('--port', 'Queue server port.')]
-	public function
-	QueueCommand():
-	int {
-
-		$Client = $this->GetQueueClient();
-
-		if(!$Client)
-		$this->Quit(1);
-
-		$Msg = $Client->Send('cmd', [
-			'Args' => array_slice($_SERVER['argv'], 2)
-		]);
-
-		print_r($Msg);
 
 		return 0;
 	}
@@ -1667,11 +1672,11 @@ extends Console\Client {
 	}
 
 	protected function
-	GetQueueClient():
+	GetQueueClient(?string $Host, ?int $Port):
 	?Queue\Client {
 
-		$Host = $this->GetOption('host') ?? '127.0.0.1';
-		$Port = $this->GetOption('port') ?? 42001;
+		$Host ??= '127.0.0.1';
+		$Port ??= 42001;
 
 		$Client = new Queue\Client($Host, $Port);
 

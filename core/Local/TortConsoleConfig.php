@@ -22,6 +22,15 @@ extends Common\Prototype {
 	public ?string
 	$PlayerCmd = NULL;
 
+	public string
+	$DefaultBind = '127.0.0.1';
+
+	public int
+	$DefaultPort = 42001;
+
+	public ?string
+	$DefaultHost = NULL;
+
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 

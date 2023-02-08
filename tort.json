@@ -2,5 +2,8 @@
 	"CheckForConda": false,
 	"DefaultVoice": "train_atkins",
 	"OutputDatestamp": "Ymd-His-v",
-	"PlayerCmd": "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" --intf dummy --no-loop {file} vlc://quit"
+	"PlayerCmd": "\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" --intf dummy --no-loop {file} vlc://quit",
+	"DefaultBind": "127.0.0.1",
+	"DefaultPort": 42001,
+	"DefaultHost": null
 }
