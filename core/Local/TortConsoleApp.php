@@ -56,11 +56,10 @@ extends Console\Client {
 	#[Console\Meta\Error(1, 'file not found (%s)')]
 	#[Console\Meta\Error(2, 'no --file or --text specified.')]
 	#[Console\Meta\Error(3, 'no valid voices selected')]
-	#[Console\Meta\Error(4, 'no conda env detected')]
+	#[Console\Meta\Error(4, 'conda error: %s')]
 	#[Console\Meta\Error(5, 'file not readable (%s)')]
 	#[Console\Meta\Error(6, 'fun aborted')]
 	#[Console\Meta\Error(7, 'unable to create output dir (%s)')]
-	#[Console\Meta\Error(8, 'invalid conda env active: %s')]
 	public function
 	CmdGenerate():
 	int {
@@ -132,7 +131,13 @@ extends Console\Client {
 		// handle reminding me that i need to use conda to make it work
 		// else it will constantly be a pain.
 
-		$this->HandleCheckingForConda($Config);
+		try {
+			$this->HandleCheckingForConda($Config);
+		}
+
+		catch(Error\CondaNotActive|Error\CondaWrongEnv $Err) {
+			$this->Quit(4, $Err->GetMessage());
+		}
 
 		// handle me constantly forgetting the batch flag when running
 		// them from batch scripts.
@@ -694,9 +699,10 @@ extends Console\Client {
 		$Remnants = $Audit->GetFiles();
 
 		$this->FormatLn(
-			'%s %d',
+			'%s %d (was %d)',
 			$this->FormatPrimary('Remaining Files:'),
-			$Remnants->Count()
+			$Remnants->Count(),
+			$Files->Count()
 		);
 
 		////////
@@ -711,6 +717,7 @@ extends Console\Client {
 	#[Console\Meta\Info('Run the queue server allowing for setting up many jobs to run in sequence. This is not needed to use this tool to run things via command or script. It is needed for the Web UI.')]
 	#[Console\Meta\Value('--bind', 'Interface to bind to. Defaults to 127.0.0.1. Set to 0.0.0.0 for any.')]
 	#[Console\Meta\Value('--fresh', 'Ignore what was in the queue file starting fresh.')]
+	#[Console\Meta\Error(1, 'conda Error: %s')]
 	public function
 	QueueServer():
 	int {
@@ -720,7 +727,13 @@ extends Console\Client {
 		$Fresh = $this->GetOption('fresh') ?? FALSE;
 		$Config = new TortConfigPackage($this->GetLocalPath('tort.json'));
 
-		$this->HandleCheckingForConda($Config);
+		try {
+			$this->HandleCheckingForConda($Config);
+		}
+
+		catch(Error\CondaNotActive|Error\CondaWrongEnv $Err) {
+			$this->Quit(1, $Err->GetMessage());
+		}
 
 		////////
 
@@ -1681,7 +1694,7 @@ extends Console\Client {
 
 		if(!isset($_ENV['CONDA_DEFAULT_ENV']))
 		if(!isset($_SERVER['CONDA_DEFAULT_ENV']))
-		$this->Quit(4);
+		throw new Error\CondaNotActive;
 
 		// check that a specific conda env is active.
 
@@ -1690,11 +1703,11 @@ extends Console\Client {
 
 		if(isset($_ENV['CONDA_DEFAULT_ENV']))
 		if($_ENV['CONDA_DEFAULT_ENV'] !== $Config->App->CheckForConda)
-		$this->Quit(8, $_ENV['CONDA_DEFAULT_ENV']);
+		throw new Error\CondaWrongEnv($_ENV['CONDA_DEFAULT_ENV']);
 
 		if(isset($_SERVER['CONDA_DEFAULT_ENV']))
 		if($_SERVER['CONDA_DEFAULT_ENV'] !== $Config->App->CheckForConda)
-		$this->Quit(8, $_SERVER['CONDA_DEFAULT_ENV']);
+		throw new Error\CondaWrongEnv($_SERVER['CONDA_DEFAULT_ENV']);
 
 		return;
 	}
