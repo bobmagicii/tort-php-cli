@@ -59,7 +59,12 @@ class TortAudioAuditor {
 
 		////////
 
-		return new Common\Datastore($Files);
+		$Output = new Common\Datastore($Files);
+		$Output->Sort()->Revalue();
+
+		//print_r($Output);
+
+		return $Output;
 	}
 
 	public function
