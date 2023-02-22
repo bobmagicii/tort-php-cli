@@ -246,7 +246,7 @@ implements JsonSerializable {
 	}
 
 	public function
-	OnProcessExit(int $Code, mixed $Signal):
+	OnProcessExit(?int $Code, mixed $Signal):
 	void {
 
 		unset($this->Server->Running[$this->ID]);
