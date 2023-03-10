@@ -311,6 +311,18 @@ extends Console\Client {
 				}
 			}
 
+			if($this->GetOption('tfast')) {
+				$Cmd = str_replace('tortoise-tts', 'tortoise-tts-fast', $Cmd);
+
+				$Cmd = preg_replace_callback(
+					'/--([a-z0-9\-]+)/',
+					function($Input) {
+						return '--'.str_replace('-', '_', $Input[1]);
+					},
+					$Cmd
+				);
+			}
+
 			$Commands[$TxtIter] = $Cmd;
 		}
 
