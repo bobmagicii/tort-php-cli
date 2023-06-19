@@ -3,35 +3,35 @@
 This is a CLI app that wraps the CLI app for TorToiSe TTS to be... more.
 
 * Support for a `voice.json` file for voices so you can save your tunings for
-  your custom voices and forget half the CLI settings.
+	your custom voices and forget half the CLI settings.
 
 * Process a single line, a text file as one paragraph, or a text file with
-  each line being run separately pre-processed so TorToiSe can do work in
-  nicer smaller batches - which helps with low VRAM hardware and avoiding some
-  pitfalls where it will start stuttering, repeating itself, or skipping entire
-  statements in longer texts.
+	each line being run separately pre-processed so TorToiSe can do work in
+	nicer smaller batches - which helps with low VRAM hardware and avoiding some
+	pitfalls where it will start stuttering, repeating itself, or skipping entire
+	statements in longer texts.
 
 * Writes a `job.json` file with each output so it can be re-ran as it was.
 
 * Interception and rewriting of the progress output that did not work well on
-  Windows, or if you ever resized your terminal window, or looked at it too
-  hard on accident.
+	Windows, or if you ever resized your terminal window, or looked at it too
+	hard on accident.
 
 * Some pre-emptive error checking. Mostly prevention of shooting yourself in
-  the foot with settings that end up crashing with a Python stack dump.
+	the foot with settings that end up crashing with a Python stack dump.
 
 * Prevent you from just overwriting the same files over and over when you
-  wanted to bulk process 100 voice lines, but with 3 samples each, such you
-  would have woke up the next morning to only 3 files.
+	wanted to bulk process 100 voice lines, but with 3 samples each, such you
+	would have woke up the next morning to only 3 files.
 
 * If you use conda there is a reminder if you failed to remember to activate
-  the conda environment. This can be disabled in `tort.json`.
+	the conda environment. This can be disabled in `tort.json`.
 
 * Dry-Run mode where it just shows you what is going to happen without doing
-  any of it.
+	any of it.
 
 * A confirmation before actually doing it, showing you what it is going to
-  do, which can be bypassed with a flag.
+	do, which can be bypassed with a flag.
 
 This is all done just with wrapping and checking things before commiting
 commands to TorToiSe. No way they'd been happy with the amount of reformatting
@@ -62,10 +62,23 @@ You should spend time to get it to work there with the `do_tts.py` to prove it
 works or else none of this is going to work either. Do not skip over the bits
 about PyTorch, double so if you want GPU processing to actually work.
 
+Here is the current path to success including dealing with how Python people
+are the best at constantly breaking their packages BC with minor point releases
+such that their package manager admits to being a meme:
+
+> ERROR: pip's dependency resolver does not currently take into account all the
+> packages that are installed. This behaviour is the source of the following
+> dependency conflicts.
+
 * `cd tort`
 * `git clone https://github.com/neonbjb/tortoise-tts`
 * `cd tortoise-tts`
-	* [ Get PyTorch working like the TorToiSe instructions say.]
+	* `conda create -n tort python=3.9.16`
+	* `conda activate tort`
+	* `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117`
+	* `conda install -c conda-forge cudatoolkit pysoundfile`
+	* `pip install -e .`
+	* `pip install transformers==4.29.2`
 	* `python setup.py install`
 	* `cd ..`
 
